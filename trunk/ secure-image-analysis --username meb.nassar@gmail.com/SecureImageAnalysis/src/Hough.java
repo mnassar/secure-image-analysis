@@ -79,7 +79,7 @@ public class Hough {
 		    //output
 		    for (int i=0;i< rhos.length;i++)
 		    	for (int j=0; j< thetas.length; j++)
-		    		if (rho_theta_space[i][j]>200)
+		    		if (rho_theta_space[i][j]>300)
 		    			System.out.println(" " + (i-rho_max) + " " + thetas[j] + " : "+ rho_theta_space[i][j]);
 		    		
 		    		
