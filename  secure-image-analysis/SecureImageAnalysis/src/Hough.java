@@ -30,7 +30,8 @@ public class Hough {
 		    //int count =0;
 		    
 		    // populate the rhos and thetas 
-		    int rho_step=1; 
+		    int rho_step=1;
+		    int rho_min=-w;
 		    int rho_max=(int) Math.sqrt(w*w+h*h);
 		    double theta_step=Math.atan(Math.min(1./w,1./h));
 		    double theta_max=Math.PI;
@@ -38,12 +39,13 @@ public class Hough {
 		    System.out.println("rho_max "+rho_max);
 		    System.out.println("theta_min "+theta_step);
 		    System.out.println("theta_max "+theta_max);
-		    int [] rhos = new int [2*rho_max+1];
+		    int [] rhos = new int [rho_max-rho_min+1];
 		    double [] thetas = new double [(int) Math.ceil(theta_max/theta_step)+1];
 		    for (int i=0;i< rhos.length;i++){
-		    	rhos[i]=-rho_max+i*rho_step;
+		    	rhos[i]=rho_min+i*rho_step;
 		    	//System.out.println(rhos[i]);
 		    }
+		    
 		    for (int i=0;i< thetas.length;i++){
 		    	thetas[i]=i*theta_step;
 		    	//System.out.println(thetas[i]+" "+ Math.cos(thetas[i])+" "+Math.sin(thetas[i]));
@@ -56,6 +58,7 @@ public class Hough {
 		    		rho_theta_space[i][j]=0;
 		    
 		    //look for lines
+		  
 		    for (int x=0; x<w; x++)
 		    	for (int y=0; y<h; y++){
 		    		// Get a pixel
@@ -63,15 +66,13 @@ public class Hough {
 		    		if (p!=-1){ //p==-1 is for white (0xffffffff)
 		    			//System.out.format("pixel %x\n",p);
 		    			//count++;
+		    			
 		    			for (int t=0; t<thetas.length; t++){
 		    				//calculate rho 
 		    				int rho =  (int) Math.round(y*Math.sin(thetas[t])+x*Math.cos(thetas[t]));
-		    		
 		    				//System.out.println(rho);
 		    				//increment the rho_tetha_space
-		    				
-		    				
-		    				rho_theta_space[rho+rho_max][t]++;
+		    				rho_theta_space[rho-rho_min][t]++;
 		    			}
 		    		}
 		    	}
@@ -79,11 +80,10 @@ public class Hough {
 		    //output
 		    for (int i=0;i< rhos.length;i++)
 		    	for (int j=0; j< thetas.length; j++)
-		    		if (rho_theta_space[i][j]>300)
-		    			System.out.println(" " + (i-rho_max) + " " + thetas[j] + " : "+ rho_theta_space[i][j]);
-		    		
-		    		
-		    
+		    		if (rho_theta_space[i][j]>200){
+		    			System.out.println(" " + rhos[i] + " " + thetas[j] + " : "+ rho_theta_space[i][j]);
+		    			//System.out.println(" " + (rho_min+i));
+		    		}
 		    		
 		    //System.out.println(count);
 		    //System.out.println(rgbs.length);
