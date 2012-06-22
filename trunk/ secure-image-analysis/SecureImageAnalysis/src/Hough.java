@@ -21,6 +21,7 @@ public class Hough {
 		//Reading an image file 
 		BufferedImage img = null;
 		try {
+			long start_initialization = System.currentTimeMillis();
 		    img = ImageIO.read(new File("img/singleLine.png"));
 		    int w = img.getWidth(null);
 		    int h = img.getHeight(null);
@@ -34,23 +35,19 @@ public class Hough {
 		    //img.getRGB(img.getMinX(), img.getMinY(), w, h, rgbs, 0, w);
 		    //int count =0;
 		    
-		    // populate the rhos and thetas 
+		    // initialize the rhos and thetas 
 		    int rho_step=1;
 		    int rho_min=-w;
 		    int rho_max=(int) Math.sqrt(w*w+h*h);
 		    double theta_step=Math.atan(Math.min(1./w,1./h));
-		    double theta_max=Math.PI;
-		    System.out.println("rho_range "+(rho_max-rho_min));
-		   // System.out.println("rho_max "+rho_max);
-		    System.out.println("theta_range "+(int)theta_max/theta_step);
-		   // System.out.println("theta_max "+theta_max);
-		    rhos = new int [rho_max-rho_min+1];
+		    double theta_max=Math.PI; // theta_min=0
+		    System.out.println("rho_range= "+rho_min+":"+rho_step+":"+rho_max+"  -->  "+(rho_max-rho_min)/rho_step);
+		    System.out.format("theta_range= "+"0:%.4f:3.14  -->  %d\n",theta_step,(int)(theta_max/theta_step));
+		    rhos = new int [((rho_max-rho_min)/rho_step)+1];
 		    thetas = new double [(int) Math.ceil(theta_max/theta_step)+1];
 		    for (int i=0;i< rhos.length;i++){
 		    	rhos[i]=rho_min+i*rho_step;
-		    	//System.out.println(rhos[i]);
 		    }
-		    
 		    for (int i=0;i< thetas.length;i++){
 		    	thetas[i]=i*theta_step;
 		    	//System.out.println(thetas[i]+" "+ Math.cos(thetas[i])+" "+Math.sin(thetas[i]));
@@ -62,8 +59,16 @@ public class Hough {
 		    	for (int j=0; j< thetas.length; j++)
 		    		rho_theta_space[i][j]=0;
 		    
+		    HashSet<LocalMaxima> local_maxima_array = new HashSet<LocalMaxima>();
+		    System.out.println("rho_local_maximization_radius "+rho_dim);
+		    System.out.println("theta_local_maximization_radius "+theta_dim);
+		    System.out.println("threshold_votes "+threshold);
+		    System.out.println("Detected straight lines:");
+		    System.out.println("i,j: \t\t rho \t theta \t\t votes");
+		    
+		    long stop_initialization = System.currentTimeMillis();
 		    //look for lines
-		  
+		    long start_populating = System.currentTimeMillis();
 		    for (int x=0; x<w; x++)
 		    	for (int y=0; y<h; y++){
 		    		// Get a pixel
@@ -77,58 +82,28 @@ public class Hough {
 		    				int rho =  (int) Math.round(y*Math.sin(thetas[t])+x*Math.cos(thetas[t]));
 		    				//System.out.println(rho);
 		    				//increment the rho_tetha_space
-		    				rho_theta_space[rho-rho_min][t]++;
+		    				rho_theta_space[(rho-rho_min)/rho_step][t]++;
 		    			}
 		    		}
 		    	}
+		    long stop_populating = System.currentTimeMillis();
 		    
 		    //output
-		    class LocalMaxima{
-		    	int i; 
-		    	int j; 
-		    	int votes;
-		    	LocalMaxima(int i, int j, int votes){
-		    		this.i=i; 
-		    		this.j=j; 
-		    		this.votes=votes; 
-		    	}
-		    	public int hashCode(){
-		    		return votes;
-		    	}
-		    	public boolean equals(Object local_maxima){
-		    		LocalMaxima lm= (LocalMaxima)local_maxima;
-		    		if (Math.abs(this.i - lm.i) < rho_dim && Math.abs(this.j -lm.j) < theta_dim )
-		    		// if a local maxima is a neighbour of another local maxima it means that they are equal	
-		    			return true; 
-		    		else return false;
-		    	}
-		    	public String toString(){
-		    		return ("rho: "+rhos[i]+", theta: "+thetas[j]+", votes: "+votes);
-		    	}
-		    }
-		    HashSet<LocalMaxima> local_maxima_array = new HashSet<LocalMaxima>();
+		    long start_local_maximization = System.currentTimeMillis();
 		    for (int i=0;i< rhos.length;i++)
 		    	for (int j=0; j< thetas.length; j++){
-		    		//local maximisation 
+		    		// thresholding + local maximisation 
 		    		if (rho_theta_space[i][j]>threshold && is_local_maxima_rectangle(i,j,rho_dim, theta_dim)){
 		    			if (!local_maxima_array.contains(new LocalMaxima(i,j,rho_theta_space[i][j]))){
-		    				System.out.println(i+","+j+": "+ rhos[i] + " " + thetas[j] + " : "+ rho_theta_space[i][j]);
+		    				System.out.format("%d,%d:\t %d \t %.4f \t %d\n",i,j, rhos[i],thetas[j], rho_theta_space[i][j]);
 		    				local_maxima_array.add(new LocalMaxima(i,j,rho_theta_space[i][j]));
 		    			}
-		    			
-		    			/*if (local_maxima_array.isEmpty()){
-		    				System.out.println(" " + rhos[i] + " " + thetas[j] + " : "+ rho_theta_space[i][j]);
-	    					local_maxima_array.add(new LocalMaxima(i,j,rho_theta_space[i][j]));
-		    			}
-		    			for (LocalMaxima local_maxima: local_maxima_array){
-		    				if (!local_maxima.is_neighbor(i,j)){
-		    					System.out.println(" " + rhos[i] + " " + thetas[j] + " : "+ rho_theta_space[i][j]);
-		    					local_maxima_array.add(new LocalMaxima(i,j,rho_theta_space[i][j]));
-		    					break;
-		    				}
-		    			}*/
 		    		}
 		    	}
+		    long stop_local_maximization = System.currentTimeMillis();
+		    System.out.println("initialisation time(ms): "+(stop_initialization-start_initialization));
+		    System.out.println("populating time(ms): "+(stop_populating-start_populating));
+		    System.out.println("local maximization time(ms): "+(stop_local_maximization-start_local_maximization));
 		    //for (LocalMaxima local_maxima: local_maxima_array){
 		    //	System.out.println(local_maxima);
 		    //}
@@ -172,5 +147,28 @@ public class Hough {
 						return false; 
 		return true; 
 	}
-	
+	static class LocalMaxima{
+    	int i; 
+    	int j; 
+    	int votes;
+    	LocalMaxima(int i, int j, int votes){
+    		this.i=i; 
+    		this.j=j; 
+    		this.votes=votes; 
+    	}
+    	public int hashCode(){
+    		return votes;
+    	}
+    	public boolean equals(Object local_maxima){
+    		LocalMaxima lm= (LocalMaxima)local_maxima;
+    		if (Math.abs(this.i - lm.i) < rho_dim && Math.abs(this.j -lm.j) < theta_dim )
+    		// if a local maxima is a neighbour of another local maxima it means that they are equal	
+    			return true; 
+    		else 
+    			return false;
+    	}
+    	public String toString(){
+    		return ("rho: "+rhos[i]+", theta: "+thetas[j]+", votes: "+votes);
+    	}
+    }
 }
