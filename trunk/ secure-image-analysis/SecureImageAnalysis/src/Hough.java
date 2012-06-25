@@ -14,18 +14,21 @@ public class Hough {
 	static int [][] rho_theta_space;
 	static int [] rhos; 
 	static double [] thetas;
-	static int rho_dim=100;
-	static int theta_dim=100;
-	static int threshold=200;
+	static int rho_dim=20;
+	static int theta_dim=20;
+	static int threshold=100;
 	static int w;
 	static int h;
 	static BufferedImage img = null; 
 	static HashSet<LocalMaxima> local_maxima_array;
+	static String img_in="img/singleLine.png";
+	static String img_out="img/SingleLineReconstructed.png";
 	public static void main(String[] args) {
 		//Reading an image file 
 		try {
 			long start_initialization = System.currentTimeMillis();
-		    img = ImageIO.read(new File("img/singleLine.png"));
+		    img = ImageIO.read(new File(img_in));
+		    System.out.println("Image to be analysed "+img_in);
 		    w = img.getWidth(null);
 		    h = img.getHeight(null);
 		    System.out.println("x_min " +img.getMinX()); 
@@ -92,13 +95,14 @@ public class Hough {
 		    long stop_populating = System.currentTimeMillis();
 		    
 		    //output
+		    int count_lines=0;
 		    long start_local_maximization = System.currentTimeMillis();
 		    for (int i=0;i< rhos.length;i++)
 		    	for (int j=0; j< thetas.length; j++){
 		    		// thresholding + local maximisation 
 		    		if (rho_theta_space[i][j]>threshold && is_local_maxima_rectangle(i,j,rho_dim, theta_dim)){
 		    			if (!local_maxima_array.contains(new LocalMaxima(i,j,rho_theta_space[i][j]))){
-		    				System.out.format("%d,%d:\t %d \t %.4f \t %d\n",i,j, rhos[i],thetas[j], rho_theta_space[i][j]);
+		    				System.out.format("%d) %d,%d:\t %d \t %.4f \t %d\n",++count_lines,i,j, rhos[i],thetas[j], rho_theta_space[i][j]);
 		    				local_maxima_array.add(new LocalMaxima(i,j,rho_theta_space[i][j]));
 		    			}
 		    		}
@@ -192,9 +196,10 @@ public class Hough {
 						if (ty>=0 && ty<h && tx>=0 && tx<w )
 							img_reconstructed.setRGB(tx, ty, 0xff000000);
 			}
-		File outputfile = new File("img/singleLineReconstructed.png");
+		File outputfile = new File(img_out);
 		try {
 			ImageIO.write(img_reconstructed, "png", outputfile);
+			System.out.println("the found lines are drawed to "+img_out);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
