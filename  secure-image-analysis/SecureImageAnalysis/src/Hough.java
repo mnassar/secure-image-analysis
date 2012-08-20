@@ -1,11 +1,19 @@
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorConvertOp;
+import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 
 import javax.imageio.ImageIO;
 
-
+/* TODO 
+ * fix the threshold as a percentage of the global maximum 
+ * Use Canny edge detection or similar method to work with real images 
+ * Verify dehoughing by inverting and superposing to the original image 
+ * 
+ */
 public class Hough {
 
 	/**
@@ -14,8 +22,8 @@ public class Hough {
 	static int [][] rho_theta_space;
 	static int [] rhos; 
 	static double [] thetas;
-	static int rho_dim=20;
-	static int theta_dim=20;
+	static int rho_dim=50;
+	static int theta_dim=50;
 	static int threshold=100;
 	static int w;
 	static int h;
@@ -23,6 +31,9 @@ public class Hough {
 	static HashSet<LocalMaxima> local_maxima_array;
 	static String img_in="img/singleLine.png";
 	static String img_out="img/SingleLineReconstructed.png";
+	static String rho_theta_gray="img/RhoThetaGray.png";
+	//static String img_in="img/sff1can1.gif";
+	//static String img_out="img/sff1can1r.gif";
 	public static void main(String[] args) {
 		//Reading an image file 
 		try {
@@ -93,7 +104,8 @@ public class Hough {
 		    		}
 		    	}
 		    long stop_populating = System.currentTimeMillis();
-		    
+		    // draw the rho theta space 
+		    // create a figure 
 		    //output
 		    int count_lines=0;
 		    long start_local_maximization = System.currentTimeMillis();
@@ -116,6 +128,7 @@ public class Hough {
 		    //}
 		    //draw the found lines in a figure and store it  
 		    draw();
+		    draw_rho_theta();
 		    
 		    } catch (IOException e) {
 		    	System.out.println(e.getMessage());
@@ -208,7 +221,33 @@ public class Hough {
 		System.out.println(" the two figures are equals? " +
 				equals(img,img_reconstructed));
 	}
-
+	static void draw_rho_theta(){
+		// create an rgb image 
+		BufferedImage img_rho_theta = new  BufferedImage (rhos.length, thetas.length, BufferedImage.TYPE_BYTE_GRAY);
+		System.out.println(rhos.length);
+		System.out.println(thetas.length);
+		WritableRaster raster = img_rho_theta.getRaster();
+		byte [] gray = new byte [rhos.length*thetas.length]; 
+		int x=0;
+		 
+			for (int j=0; j<thetas.length;j++)
+				for (int i=0; i<rhos.length; i++){
+				if (rho_theta_space[i][j]< 255)
+					gray[x++]= (byte)(255 -  rho_theta_space[i][j]);
+				else 
+					gray[x++]=0;
+			}
+   		raster.setDataElements(0, 0,rhos.length, thetas.length,  gray);
+		File grayFile = new File(rho_theta_gray);
+		try {
+			ImageIO.write(img_rho_theta, "png", grayFile);
+			System.out.println("the rho theta space is drawed with gray scale to " + rho_theta_gray);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
 	static boolean equals(BufferedImage one, BufferedImage two){
 		// this method compares 1 black pixel of figure one to the same pixel 
 		// in figure two, if it is not black the equality fails
