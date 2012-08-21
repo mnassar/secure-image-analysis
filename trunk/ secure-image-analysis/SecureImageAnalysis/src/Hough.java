@@ -4,12 +4,13 @@ import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 
 import javax.imageio.ImageIO;
 
 /* TODO 
- * fix the threshold as a percentage of the global maximum 
  * Use Canny edge detection or similar method to work with real images 
  * Verify dehoughing by inverting and superposing to the original image 
  * 
@@ -24,12 +25,12 @@ public class Hough {
 	static double [] thetas;
 	static int rho_dim=50;
 	static int theta_dim=50;
-	static int threshold=100;
+	static double threshold=0.7;
 	static int w;
 	static int h;
 	static BufferedImage img = null; 
 	static HashSet<LocalMaxima> local_maxima_array;
-	static String img_in="img/singleLine.png";
+	static String img_in="img/SingleLine.png";
 	static String img_out="img/SingleLineReconstructed.png";
 	static String rho_theta_gray="img/RhoThetaGray.png";
 	//static String img_in="img/sff1can1.gif";
@@ -109,10 +110,12 @@ public class Hough {
 		    //output
 		    int count_lines=0;
 		    long start_local_maximization = System.currentTimeMillis();
+		    int thresh = (int) (threshold * maxValue(rho_theta_space));
+		    System.out.println(" thresh is " + thresh);
 		    for (int i=0;i< rhos.length;i++)
 		    	for (int j=0; j< thetas.length; j++){
 		    		// thresholding + local maximisation 
-		    		if (rho_theta_space[i][j]>threshold && is_local_maxima_rectangle(i,j,rho_dim, theta_dim)){
+		    		if (rho_theta_space[i][j]>thresh && is_local_maxima_rectangle(i,j,rho_dim, theta_dim)){
 		    			if (!local_maxima_array.contains(new LocalMaxima(i,j,rho_theta_space[i][j]))){
 		    				System.out.format("%d) %d,%d:\t %d \t %.4f \t %d\n",++count_lines,i,j, rhos[i],thetas[j], rho_theta_space[i][j]);
 		    				local_maxima_array.add(new LocalMaxima(i,j,rho_theta_space[i][j]));
@@ -223,21 +226,21 @@ public class Hough {
 	}
 	static void draw_rho_theta(){
 		// create an rgb image 
-		BufferedImage img_rho_theta = new  BufferedImage (rhos.length, thetas.length, BufferedImage.TYPE_BYTE_GRAY);
+		BufferedImage img_rho_theta = new  BufferedImage (thetas.length, rhos.length, BufferedImage.TYPE_BYTE_GRAY);
 		System.out.println(rhos.length);
 		System.out.println(thetas.length);
 		WritableRaster raster = img_rho_theta.getRaster();
 		byte [] gray = new byte [rhos.length*thetas.length]; 
 		int x=0;
-		 
-			for (int j=0; j<thetas.length;j++)
-				for (int i=0; i<rhos.length; i++){
-				if (rho_theta_space[i][j]< 255)
-					gray[x++]= (byte)(255 -  rho_theta_space[i][j]);
+		for (int j=0; j<rhos.length; j++)
+			for (int i=0; i<thetas.length;i++)
+				{
+				if (rho_theta_space[j][i]< 255)
+					gray[x++]= (byte)(255 -  rho_theta_space[j][i]);
 				else 
 					gray[x++]=0;
 			}
-   		raster.setDataElements(0, 0,rhos.length, thetas.length,  gray);
+   		raster.setDataElements(0, 0,thetas.length, rhos.length,  gray);
 		File grayFile = new File(rho_theta_gray);
 		try {
 			ImageIO.write(img_rho_theta, "png", grayFile);
@@ -279,4 +282,16 @@ public class Hough {
 				 					return false;
 		return true;
 	}
+
+// method to find the global maximum 
+private static int maxValue(int[][] a) {
+    int max = a[0][0];
+    for (int i = 0; i < a.length; i++)
+    	for (int j = 0; j < a.length; j++){
+            if (a[i][j] > max) {
+                    max = a[i][j];
+            }
+    }
+    return max;
+}
 }
