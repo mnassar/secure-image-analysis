@@ -1,11 +1,7 @@
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorConvertOp;
-import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 
 import javax.imageio.ImageIO;
@@ -287,7 +283,7 @@ public class Hough {
 private static int maxValue(int[][] a) {
     int max = a[0][0];
     for (int i = 0; i < a.length; i++)
-    	for (int j = 0; j < a.length; j++){
+    	for (int j = 0; j < a[0].length; j++){
             if (a[i][j] > max) {
                     max = a[i][j];
             }
