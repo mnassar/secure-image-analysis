@@ -3,6 +3,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+
 
 
 public class HomomorphicServer {
@@ -11,8 +16,6 @@ public class HomomorphicServer {
 	 * @param args
 	 */
 	static String enc_zeros_file="shared/enc_zeros.txt";
-	static BigInteger zero=new BigInteger("0");
-	static BigInteger one=new BigInteger("1");
 	Paillier paillier; 
 
 	public HomomorphicServer (){
@@ -20,7 +23,7 @@ public class HomomorphicServer {
 	}
 	public static void main(String[] args) {
 		//new HomomorphicServer().get_encrypted_zeros(10);
-		new HomomorphicServer().pre_compute_encrypted_zeros(400000);
+		//new HomomorphicServer().pre_compute_encrypted_zeros(400000);
 		//new HomomorphicServer().pre_compute_encrypted_zeros(1);
 	}
 
@@ -33,7 +36,7 @@ public class HomomorphicServer {
 			BufferedWriter out = new BufferedWriter(new FileWriter(file));	
 			long start = System.currentTimeMillis();
 			for (int i=0; i<nb; i++){
-				out.write(paillier.Encryption(zero)+"\n");
+				out.write(paillier.Encryption(BigInteger.ZERO)+"\n");
 				//System.out.println(i +" " + enc_0[i]);
 			}
 			long end = System.currentTimeMillis();
@@ -49,7 +52,7 @@ public class HomomorphicServer {
 		BigInteger [] enc_0= new BigInteger[nb];
 		long start = System.currentTimeMillis();
 		for (int i=0; i<nb; i++){
-			enc_0[i]=paillier.Encryption(new BigInteger("0"));
+			enc_0[i]=paillier.Encryption(BigInteger.ZERO);
 			//System.out.println(i +" " + enc_0[i]);
 		}
 		long end = System.currentTimeMillis();
@@ -60,10 +63,10 @@ public class HomomorphicServer {
 		
 	}
 	public BigInteger get_encrypted_one(){
-		return paillier.Encryption(one);
+		return paillier.Encryption(BigInteger.ONE);
 	}
 	public BigInteger get_encrypted_zero(){
-		return paillier.Encryption(zero);
+		return paillier.Encryption(BigInteger.ZERO);
 	}
 	int[][] decrypt_A(BigInteger[][] enc_Acc){
 		System.out.println("HOMOM accumulator decryption ...");
@@ -82,5 +85,48 @@ public class HomomorphicServer {
 		long end = System.currentTimeMillis();
 		System.out.format("HOMOM time for accumulator decryption %d ms\n", (end-start));
 		return A; 
+	}
+	
+	
+	
+	public HashSet<Point> find_local_maximas(HashMap<Point, LinkedList<BigInteger>> enc_hashmap, int thresh) {
+		System.out.println("HOMOM local maximization, threshold="+thresh);
+		long start_local_maximization = System.currentTimeMillis();
+		HashSet<Point> local_maxima_array = new HashSet<Point>();
+		Iterator<Point> iterator= enc_hashmap.keySet().iterator(); 
+		BigInteger maxInt = new BigInteger(Integer.MAX_VALUE+""); 
+		while(iterator.hasNext()){
+			Point p =iterator.next();
+			int votes = paillier.Decryption(p.value).intValue();
+			if (votes > thresh){
+				LinkedList<BigInteger> differences = enc_hashmap.get(p);  
+				Iterator<BigInteger> d_iterator = differences.iterator();
+				boolean is_local_maxima=true;
+				while (d_iterator.hasNext()){
+					BigInteger d= paillier.Decryption(d_iterator.next());
+					
+					/*if ((p.i+p.j)%2==0){
+						System.out.println(d.toString());
+						System.out.println(d.intValue());
+						System.out.println(d.max(maxInt).intValue());
+						System.out.println(maxInt.intValue());
+					}*/
+					if (!(maxInt.intValue()==d.max(maxInt).intValue())){// it means the d is negative 
+						is_local_maxima=false;
+						break;
+					}
+				}
+				if (is_local_maxima){
+					p.votes=votes;
+					local_maxima_array.add(p);
+					//System.out.println(p.votes);
+				}
+			}
+		}
+		long stop_local_maximization = System.currentTimeMillis();
+		System.out.println("HOMOM local maximization time(ms): "
+	    		+(stop_local_maximization-start_local_maximization));
+		System.out.println("HOMOM send results to client");
+		return local_maxima_array;
 	}
 }

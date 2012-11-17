@@ -19,8 +19,8 @@ public class Hough {
 	static int [][] rho_theta_space;
 	static int [] rhos; 
 	static double [] thetas;
-	static int rho_dim=50;
-	static int theta_dim=50;
+	static int rho_dim=1;
+	static int theta_dim=1;
 	static double threshold=0.7;
 	static int w;
 	static int h;
@@ -50,20 +50,21 @@ public class Hough {
 		    //int count =0;
 		    
 		    // initialize the rhos and thetas 
-		    int rho_step=1;
+		    int rho_step=200;
 		    int rho_min=-w;
 		    int rho_max=(int) Math.sqrt(w*w+h*h);
-		    double theta_step=Math.atan(Math.min(1./w,1./h));
+		    double theta_step=1000*Math.atan(Math.min(1./w,1./h));
 		    double theta_max=Math.PI; // theta_min=0
 		    System.out.println("rho_range= "+rho_min+":"+rho_step+":"+rho_max+"  -->  "+(rho_max-rho_min)/rho_step);
 		    System.out.format("theta_range= "+"0:%.4f:3.14  -->  %d\n",theta_step,(int)(theta_max/theta_step));
 		    rhos = new int [((rho_max-rho_min)/rho_step)+1];
-		    thetas = new double [(int) Math.round(theta_max/theta_step)+1];
+		    thetas = new double [(int) (theta_max/theta_step)+1];
 		    for (int i=0;i< rhos.length;i++){
 		    	rhos[i]=rho_min+i*rho_step;
 		    }
 		    for (int i=0;i< thetas.length;i++){
 		    	thetas[i]=i*theta_step;
+		    	
 		    	//System.out.println(thetas[i]+" "+ Math.cos(thetas[i])+" "+Math.sin(thetas[i]));
 		    }
 		    //thetas[thetas.length-1]=Math.PI;
@@ -93,7 +94,7 @@ public class Hough {
 		    			
 		    			for (int t=0; t<thetas.length; t++){
 		    				//calculate rho 
-		    				int rho =  (int) Math.round(y*Math.sin(thetas[t])+x*Math.cos(thetas[t]));
+		    				int rho =  (int) Math.ceil(y*Math.sin(thetas[t])+x*Math.cos(thetas[t]));
 		    				//System.out.println(rho);
 		    				//increment the rho_tetha_space
 		    				rho_theta_space[(rho-rho_min)/rho_step][t]++;
@@ -106,7 +107,8 @@ public class Hough {
 		    //output
 		    int count_lines=0;
 		    long start_local_maximization = System.currentTimeMillis();
-		    int thresh = (int) (threshold * maxValue(rho_theta_space));
+		    //int thresh = (int) (threshold * maxValue(rho_theta_space));
+		    int thresh=100;
 		    System.out.println(" thresh is " + thresh);
 		    for (int i=0;i< rhos.length;i++)
 		    	for (int j=0; j< thetas.length; j++){
@@ -161,7 +163,7 @@ public class Hough {
 	static boolean is_local_maxima_rectangle(int i, int j, int r_rho, int r_theta){
 		for (int i1=i-r_rho;i1<i+r_rho+1; i1++)
 			for (int j1=j-r_theta;j1<j+r_theta+1;j1++)
-				if (i1>=0 && i1<rho_theta_space.length && j1>=0 && j1 <rho_theta_space[i1].length)
+				if (i1>=0 && i1<rho_theta_space.length && j1>=0 && j1 <rho_theta_space[i1].length && !(i1==i && j1==j))
 					if (rho_theta_space[i][j]<rho_theta_space[i1][j1])
 						return false; 
 		return true; 
