@@ -24,8 +24,8 @@ public class Client {
 	static int threshold = 100;
 	static int theta_discretisation_coeff=1000;
 	static int rho_discretisation_coeff=1;
-	static int kernel_multiplier=6;
-	
+	//static int kernel_multiplier=6;
+	static int kernel_multiplier=2;
 	HomomorphicServer homom_server; 
 	HoughServer hough_server;
 	BigInteger nsquare;

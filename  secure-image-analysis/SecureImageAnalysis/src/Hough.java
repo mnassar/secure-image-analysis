@@ -50,10 +50,10 @@ public class Hough {
 		    //int count =0;
 		    
 		    // initialize the rhos and thetas 
-		    int rho_step=200;
+		    int rho_step=100;
 		    int rho_min=-w;
 		    int rho_max=(int) Math.sqrt(w*w+h*h);
-		    double theta_step=1000*Math.atan(Math.min(1./w,1./h));
+		    double theta_step=300*Math.atan(Math.min(1./w,1./h));
 		    double theta_max=Math.PI; // theta_min=0
 		    System.out.println("rho_range= "+rho_min+":"+rho_step+":"+rho_max+"  -->  "+(rho_max-rho_min)/rho_step);
 		    System.out.format("theta_range= "+"0:%.4f:3.14  -->  %d\n",theta_step,(int)(theta_max/theta_step));
