@@ -107,6 +107,7 @@ public class HoughServer {
 								BigInteger c= rho_theta_space[i1][j1].modPow(minusOne, nsquare);
 								differences.add( rho_theta_space[i][j].multiply(c).mod(nsquare) );
 							}
+							
 				}
 					
 				points_differences.put(p, differences);

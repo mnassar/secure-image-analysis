@@ -116,7 +116,7 @@ public class Blur {
 	 * Apply the blurring kernel to the source 
 	 */
     public BigInteger[][] filter( BigInteger [][] src, BigInteger nsquare) {
-    	System.out.println("HOUGH Gaussian kernel multiplier"+kernel_multiplier);
+    	System.out.println("HOUGH/BLUR Gaussian kernel multiplier: "+kernel_multiplier);
     	float[] matrix = kernel.getKernelData( null );
     	int cols = kernel.getWidth();
 		int cols2 = cols/2;
