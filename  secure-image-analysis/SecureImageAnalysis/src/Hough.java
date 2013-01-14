@@ -19,9 +19,9 @@ public class Hough {
 	static int [][] rho_theta_space;
 	static int [] rhos; 
 	static double [] thetas;
-	static int rho_dim=1;
-	static int theta_dim=1;
-	static double threshold=0.7;
+	static int rho_dim=10;
+	static int theta_dim=100;
+	static double threshold=0.95;
 	static int w;
 	static int h;
 	static BufferedImage img = null; 
@@ -50,10 +50,10 @@ public class Hough {
 		    //int count =0;
 		    
 		    // initialize the rhos and thetas 
-		    int rho_step=100;
+		    int rho_step=1;
 		    int rho_min=-w;
 		    int rho_max=(int) Math.sqrt(w*w+h*h);
-		    double theta_step=300*Math.atan(Math.min(1./w,1./h));
+		    double theta_step=Math.atan(Math.min(1./w,1./h));
 		    double theta_max=Math.PI; // theta_min=0
 		    System.out.println("rho_range= "+rho_min+":"+rho_step+":"+rho_max+"  -->  "+(rho_max-rho_min)/rho_step);
 		    System.out.format("theta_range= "+"0:%.4f:3.14  -->  %d\n",theta_step,(int)(theta_max/theta_step));
@@ -198,18 +198,36 @@ public class Hough {
 		for (int p=0; p<rgbArray.length;p++)
 			rgbArray[p]=0xffffffff;
 		img_reconstructed.setRGB(0, 0, w, h, rgbArray, 0, w);
-		for (LocalMaxima local_maxima: local_maxima_array)
-			for (int x=0;x<w;x++){
-				// calculate y 
-				int y = (int) Math.round((rhos[local_maxima.i] - x*Math.cos(thetas[local_maxima.j]))
-						/Math.sin(thetas[local_maxima.j]));
-				// we can increase the thickness of the line by coloring the 8 pixels around
-				// this helps when comparing the equality of two pictures tolerating some thickness difference
-				for (int tx=x-2; tx<x+3;tx++)
-					for (int ty=y-2; ty<y+3;ty++)
-						if (ty>=0 && ty<h && tx>=0 && tx<w )
-							img_reconstructed.setRGB(tx, ty, 0xff000000);
+		for (LocalMaxima local_maxima: local_maxima_array){
+			int rho=rhos[local_maxima.i]; 
+			double theta=thetas[local_maxima.j];
+			if (theta>(Math.PI/2)-0.01 && theta<(Math.PI/2)+0.01 && rho>=0 && rho<=h ){//y=cte
+				for (int x=0;x<w;x++){
+					img_reconstructed.setRGB(x, rho, 0xff000000);
+				}
 			}
+		
+			else if ((theta<0.01 && rho>0 && rho<w) || 
+					(theta>Math.PI-0.01 && -rho>0 && -rho <w)) { //x=cte 
+					for (int y=0;y<h;y++){
+						img_reconstructed.setRGB(Math.abs(rho), y, 0xff000000);
+					}
+				}
+			else {// normal case 
+				for (int x=0;x<w;x++){
+					// calculate y 
+					int y = (int) Math.round((rho- x*Math.cos(theta))/Math.sin(theta));
+					// we can increase the thickness of the line by coloring the 8 pixels around
+					// this helps when comparing the equality of two pictures tolerating some thickness difference
+					//for (int tx=x-2; tx<x+3;tx++)
+					//	for (int ty=y-2; ty<y+3;ty++)
+					//		if (ty>=0 && ty<h && tx>=0 && tx<w )
+					//			img_reconstructed.setRGB(tx, ty, 0xff000000);
+					if (y>=0 && y<h && x>=0 && x<w )
+						img_reconstructed.setRGB(x, y, 0xff000000);
+				}
+			}
+		}
 		File outputfile = new File(img_out);
 		try {
 			ImageIO.write(img_reconstructed, "png", outputfile);
