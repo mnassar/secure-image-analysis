@@ -134,7 +134,7 @@ public class Paillier {
         Paillier paillier = new Paillier();
         /* instantiating two plaintext msgs*/
         BigInteger m1 = new BigInteger("20");
-        BigInteger m2 = new BigInteger("-1");
+        BigInteger m2 = new BigInteger("1");
         /* encryption*/
         BigInteger em1 = paillier.Encryption(m1);
         BigInteger em2 = paillier.Encryption(m2);
@@ -157,7 +157,11 @@ public class Paillier {
         System.out.println("original product: " + prod_m1m2.toString());
         System.out.println("decrypted product: " + paillier.Decryption(expo_em1m2).toString());
         //System.out.println(paillier.nsquare);
-        System.out.println("decrypted product: " + 
-        paillier.Decryption(em2).multiply(new BigInteger("-1")).add(paillier.n).toString());
+       // System.out.println("decrypted product: " + 
+        //paillier.Decryption(em2).multiply(new BigInteger("-1")).add(paillier.n).toString());
+        BigInteger m11 = paillier.Decryption(paillier.Encryption(em1));
+        BigInteger m12 = paillier.Decryption(em1);
+        System.out.println("decryption of encryption of encryption: " + m11); 
+        System.out.println("decryption of encryption of encryption: " + m12);
     }
 }

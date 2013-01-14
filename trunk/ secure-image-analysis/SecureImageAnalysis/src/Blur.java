@@ -26,7 +26,8 @@ public class Blur {
 		Blur b = new Blur();
 		float[] matrix = b.kernel.getKernelData( null );
     	for (int i=0; i<matrix.length; i++){
-    		System.out.print(kernel_multiplier*matrix[i]+" ");
+    		//System.out.print(kernel_multiplier*matrix[i]+" ");
+    		System.out.print(matrix[i]+" ");
     	}
 		//b.filter(src, nsquare)
 		/*Blur b = new Blur();

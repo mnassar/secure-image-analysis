@@ -15,15 +15,18 @@ import javax.imageio.ImageIO;
 
 
 
+
+
 public class Client {
 	//config variables
 	static String enc_zeros_file="shared/enc_zeros.txt";
 	static String img_path="img/SingleLine.png";
+	static String img_out_path="img/SingleLineReconstructed.png";
 	static int rho_radius=1;
 	static int theta_radius=1;
 	static int threshold = 100;
-	static int theta_discretisation_coeff=1000;
-	static int rho_discretisation_coeff=1;
+	static int theta_discretisation_coeff=100; //bigger means bigger theta step (less thetas)
+	static int rho_discretisation_coeff=1; // bigger means bigger rho step (less rhos)
 	//static int kernel_multiplier=6;
 	static int kernel_multiplier=2;
 	HomomorphicServer homom_server; 
@@ -55,9 +58,6 @@ public class Client {
 		BigInteger[][] enc_img=client.encrypt_image(img_path);
 		long end = System.currentTimeMillis();
 		System.out.format("CLIENT time for image encryption %d ms\n", (end-start));
-		
-		
-		
 		/*
 		 BigInteger [][] enc_A=client.hough_server.accumulate(enc_img,rho_step,theta_step, 
 				client.nsquare);
@@ -124,6 +124,60 @@ public class Client {
 			System.out.format("CLIENT %d) %d,%d:\t %d \t %.4f \t %d\n",
 					++count_lines,p.i,p.j, rho_min+p.i*rho_step,theta_min+p.j*theta_step, p.votes);
 		}
+		// reconstruct image / shapes 
+		draw(local_maxima_array, w, h, rho_min, rho_step, theta_min,theta_step);
+	}
+	
+	static void draw(HashSet<Point> local_maxima_array, int w, int h, 
+			int rho_min, int rho_step, double theta_min, double theta_step){
+	
+		BufferedImage img_reconstructed = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+		int [] rgbArray= new int[w*h];
+		for (int p=0; p<rgbArray.length;p++)
+			rgbArray[p]=0xffffffff;
+		img_reconstructed.setRGB(0, 0, w, h, rgbArray, 0, w);
+		Iterator<Point> iterator = local_maxima_array.iterator();
+		while (iterator.hasNext()){
+			Point p= iterator.next();
+			int rho = rho_min+p.i*rho_step;
+			double theta= theta_min+p.j*theta_step;
+			// it theta between 1.56 and 1.58 we consider a line y=cte
+			if (theta>(Math.PI/2)-0.01 && theta<(Math.PI/2)+0.01 && rho>=0 && rho<=h ){
+				for (int x=0;x<w;x++){
+					img_reconstructed.setRGB(x, rho, 0xff000000);
+				}
+			}
+			
+			else if ((theta<theta_step && rho>0 && rho<w) || 
+					(theta>Math.PI - theta_step && rho<0 && rho >-w)) { //x=cte 
+					for (int y=0;y<h;y++){
+						img_reconstructed.setRGB(Math.abs(rho), y, 0xff000000);
+					}
+				}
+			else {// normal case 
+				for (int x=0;x<w;x++){
+					// calculate y
+					int y=(int) Math.round((rho - x*Math.cos(theta))/Math.sin(theta));
+					// we can increase the thickness of the line by coloring the 8 pixels around
+					// this helps when comparing the equality of two pictures tolerating some thickness difference
+					//for (int tx=x-2; tx<x+3;tx++)
+					//	for (int ty=y-2; ty<y+3;ty++)
+					if (y>=0 && y<h && x>=0 && x<w )
+						img_reconstructed.setRGB(x, y, 0xff000000);
+				}
+		}
+					
+				
+		}
+		File outputfile = new File(img_out_path);
+		try {
+			ImageIO.write(img_reconstructed, "png", outputfile);
+			System.out.println("CLIENT the found lines are drawn to "+img_out_path);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	
 	}
 	
 	BigInteger[][] encrypt_image(String img_in){
