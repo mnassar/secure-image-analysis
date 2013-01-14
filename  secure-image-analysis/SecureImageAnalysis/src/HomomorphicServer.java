@@ -3,10 +3,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
 
 
 
@@ -89,43 +86,56 @@ public class HomomorphicServer {
 	
 	
 	
-	public HashSet<Point> find_local_maximas(HashMap<Point, LinkedList<BigInteger>> enc_hashmap, int thresh) {
+	public HashSet<Point> find_local_maximas(ShapesDataStructure enc_hashmap, int thresh) {
 		System.out.println("HOMOM local maximization, threshold="+thresh);
 		long start_local_maximization = System.currentTimeMillis();
-		HashSet<Point> local_maxima_array = new HashSet<Point>();
-		Iterator<Point> iterator= enc_hashmap.keySet().iterator(); 
+		Point[] points = enc_hashmap.points;
+		BigInteger[][] gradiants = enc_hashmap.gradiants;
 		BigInteger maxInt = new BigInteger(Integer.MAX_VALUE+""); 
-		while(iterator.hasNext()){
-			Point p =iterator.next();
-			int votes = paillier.Decryption(p.value).intValue();
-			if (votes > thresh){
-				LinkedList<BigInteger> differences = enc_hashmap.get(p);  
-				Iterator<BigInteger> d_iterator = differences.iterator();
+		int count=0;
+		HashSet<Point> local_maxima_array= new HashSet<Point>();
+		int nb_of_lines=0;	
+		for (Point p:points){
+			int votesd = paillier.Decryption(p.value).intValue();
+			if (votesd > thresh){
 				boolean is_local_maxima=true;
-				while (d_iterator.hasNext()){
-					BigInteger d= paillier.Decryption(d_iterator.next());
-					
-					/*if ((p.i+p.j)%2==0){
+				//System.out.println ( gradiants[count].length);
+
+				//for (BigInteger d: gradiants[count])
+					//if (d != null)
+						//System.out.println ( d.intValue());
+				for (BigInteger d: gradiants[count]){
+					if (d != null){
+						//System.out.println ( d);
+						BigInteger dd= paillier.Decryption(d);
+						//System.out.println ( dd);
+						/*if ((p.i+p.j)%2==0){
 						System.out.println(d.toString());
 						System.out.println(d.intValue());
 						System.out.println(d.max(maxInt).intValue());
 						System.out.println(maxInt.intValue());
 					}*/
-					if (!(maxInt.intValue()==d.max(maxInt).intValue())){// it means the d is negative 
-						is_local_maxima=false;
-						break;
+						if (!(maxInt.intValue()==dd.max(maxInt).intValue())){// it means the d is negative 
+							is_local_maxima=false;
+							break;
+						}
 					}
-				}
-				if (is_local_maxima){
-					p.votes=votes;
-					local_maxima_array.add(p);
-					//System.out.println(p.votes);
+					
+					if (is_local_maxima){
+						p.votes=votesd;
+						local_maxima_array.add(p);
+						nb_of_lines++; 
+						//System.out.println(p.votes);
+					}
+					
+					count++;
 				}
 			}
 		}
+		System.out.println("HOMOM number of lines before tie break  "+ nb_of_lines);
 		long stop_local_maximization = System.currentTimeMillis();
 		System.out.println("HOMOM local maximization time(ms): "
-	    		+(stop_local_maximization-start_local_maximization));
+				+(stop_local_maximization-start_local_maximization));
 		System.out.println("HOMOM send results to client");
 		return local_maxima_array;
 	}
