@@ -5,10 +5,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 
 import javax.imageio.ImageIO;
 
@@ -28,7 +26,7 @@ public class Client {
 	static int theta_discretisation_coeff=100; //bigger means bigger theta step (less thetas)
 	static int rho_discretisation_coeff=1; // bigger means bigger rho step (less rhos)
 	//static int kernel_multiplier=6;
-	static int kernel_multiplier=2;
+	static int kernel_multiplier=6;
 	HomomorphicServer homom_server; 
 	HoughServer hough_server;
 	BigInteger nsquare;
@@ -49,7 +47,7 @@ public class Client {
 		 Point.theta_radius=theta_radius;
 		 HoughServer.rho_radius=rho_radius;
 		 HoughServer.theta_radius=theta_radius;
-		 Blur.kernel_multiplier= kernel_multiplier;
+		 //Blur.kernel_multiplier= kernel_multiplier;
 		 //paillier = new Paillier();
 	}
 	public static void main(String [] args){
@@ -112,8 +110,9 @@ public class Client {
 		int rho_min=-w;
 		double theta_min=0; 
 		System.out.println("CLIENT sends encrypted image to the hough server");
-		HashMap<Point, LinkedList<BigInteger>> enc_hashmap=(HashMap<Point, LinkedList<BigInteger>>) 
-				client.hough_server.accumulate_n_blur(enc_img,rho_step,theta_step,client.nsquare);
+		BigInteger enc_0= client.homom_server.get_encrypted_zero();
+		ShapesDataStructure enc_hashmap= 
+				client.hough_server.accumulate_n_blur(enc_img,rho_step,theta_step,client.nsquare,enc_0);
 		System.out.println("CLIENT received encrypted hashmap from the hough server");
 		System.out.println("CLIENT sends encrypted hashmap to the homomoprphic server");
 		HashSet<Point> local_maxima_array =client.homom_server.find_local_maximas(enc_hashmap,threshold);

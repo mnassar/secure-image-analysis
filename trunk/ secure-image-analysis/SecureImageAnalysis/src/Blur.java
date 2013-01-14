@@ -20,14 +20,22 @@ public class Blur {
 
 	protected int radius;
 	protected Kernel kernel;
-	static int kernel_multiplier=6;
+	protected int kernel_multiplier;
 	
+	public int getKernel_multiplier() {
+		return kernel_multiplier;
+	}
+
+	public void setKernel_multiplier(int kernel_multiplier) {
+		this.kernel_multiplier = kernel_multiplier;
+	}
+
 	public static void main(String [] args){
 		Blur b = new Blur();
 		float[] matrix = b.kernel.getKernelData( null );
     	for (int i=0; i<matrix.length; i++){
     		//System.out.print(kernel_multiplier*matrix[i]+" ");
-    		System.out.print(matrix[i]+" ");
+    		System.out.print(matrix[i]*6+" ");
     	}
 		//b.filter(src, nsquare)
 		/*Blur b = new Blur();
@@ -65,6 +73,7 @@ public class Blur {
 	 * @param radius blur radius in pixels
 	 */
 	public Blur(int radius) {
+		kernel_multiplier=6;
 		setRadius(radius);
 	}
 
@@ -116,8 +125,13 @@ public class Blur {
 	/**
 	 * Apply the blurring kernel to the source 
 	 */
-    public BigInteger[][] filter( BigInteger [][] src, BigInteger nsquare) {
+    public BigInteger[][] filter( BigInteger [][] src, BigInteger nsquare, BigInteger enc_0) {
+    	//ATTENTION: this is the rho theta space not the image,
+    	//ATTENTION:  w and h here are not w and h of the image
     	System.out.println("HOUGH/BLUR Gaussian kernel multiplier: "+kernel_multiplier);
+    	//System.out.println(kernel_multiplier);
+    	// matrix is the row containing the blurring coefficients 
+    	// imatrix is the blurring coefficient shifted to integers by using the kernel multiplier
     	float[] matrix = kernel.getKernelData( null );
     	int cols = kernel.getWidth();
 		int cols2 = cols/2;
@@ -130,18 +144,18 @@ public class Blur {
     	BigInteger [][] blurred= new BigInteger[w][h];
 		for (int x = 0; x < w; x++) {
 			for (int y = 0; y < h; y++) {
-				blurred[x][y]=BigInteger.ONE;
+				blurred[x][y]=enc_0;
 				int moffset = cols2;
 				for (int col = -cols2; col <= cols2; col++) {
-					int f = imatrix[moffset+col];
+					//int f = imatrix[moffset+col];
 					int iy = y+col;
 					if ( iy < 0 ) {
 						iy = 0;
 					} else if ( iy >= h) {
 						iy = h-1;
 					}
-					//blurred[x][y]+=f*src[x][iy];
-					BigInteger c=src[x][iy].modPow(new BigInteger(f+""), nsquare);
+					//blurred[x][y]+=imatrix[moffset+col]*src[x][iy];
+					BigInteger c=src[x][iy].modPow(new BigInteger(imatrix[moffset+col]+""), nsquare);
 					blurred[x][y]=blurred[x][y].multiply(c).mod(nsquare);
 				}
 			}
