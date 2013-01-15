@@ -97,7 +97,10 @@ public class HomomorphicServer {
 		int nb_of_lines=0;	
 		for (Point p:points){
 			int votesd = paillier.Decryption(p.value).intValue();
+			
 			if (votesd > thresh){
+				//System.out.println (p.value);
+				//System.out.println (votesd);
 				boolean is_local_maxima=true;
 				//System.out.println ( gradiants[count].length);
 
@@ -109,6 +112,7 @@ public class HomomorphicServer {
 						//System.out.println ( d);
 						BigInteger dd= paillier.Decryption(d);
 						//System.out.println ( dd);
+						//System.out.println ( );
 						/*if ((p.i+p.j)%2==0){
 						System.out.println(d.toString());
 						System.out.println(d.intValue());

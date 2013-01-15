@@ -11,10 +11,6 @@ import java.util.Iterator;
 import javax.imageio.ImageIO;
 
 
-
-
-
-
 public class Client {
 	//config variables
 	static String enc_zeros_file="shared/enc_zeros.txt";
@@ -23,7 +19,7 @@ public class Client {
 	static int rho_radius=1;
 	static int theta_radius=1;
 	static int threshold = 100;
-	static int theta_discretisation_coeff=100; //bigger means bigger theta step (less thetas)
+	static int theta_discretisation_coeff=1000; //bigger means bigger theta step (less thetas)
 	static int rho_discretisation_coeff=1; // bigger means bigger rho step (less rhos)
 	//static int kernel_multiplier=6;
 	static int kernel_multiplier=6;
