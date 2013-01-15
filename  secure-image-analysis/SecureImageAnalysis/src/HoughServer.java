@@ -109,6 +109,8 @@ public class HoughServer {
 	    //		System.out.println(rho_theta_space[x][y]);
 		long start_calculating_differences = System.currentTimeMillis();
 		int count=0;
+		
+		
 		for (int i=0; i<ws; i++)
 			for (int j=0; j<hs; j++){
 				Point p = new Point(i,j,rho_theta_space[i][j]);
@@ -120,9 +122,18 @@ public class HoughServer {
 						for (int j1=j-theta_radius;j1<j+theta_radius+1;j1++)
 							if (i1>=0 && i1<ws && j1>=0 && j1 <hs && !(i1==i && j1==j)){
 								//differences.append( rho_theta_space[i][j]-rho_theta_space[i1][j1]);
-								BigInteger c= blurred[i1][j1].modPow(minusOne, nsquare);
-								points_differences[count][counta]=blurred[i][j].multiply(c).mod(nsquare) ;
-								
+								if (!blurred[i1][j1].equals(blurred[i][j])){
+									BigInteger c= blurred[i1][j1].modPow(minusOne, nsquare);
+									points_differences[count][counta]=blurred[i][j].multiply(c).mod(nsquare);
+									//System.out.println(points_differences[count][counta]);//==BigInteger.ONE){
+								}
+								//System.out.println(ws);
+								//System.out.println(hs);	
+								//System.out.println(points_differences[count][counta]);//==BigInteger.ONE){
+								//System.out.println(i+" "+j+" "+rho_theta_space[i][j]);
+								//System.out.println(i1+" "+j1+" "+rho_theta_space[i1][j1]);
+								//System.out.println();
+								//}
 								counta++;
 							}
 				}
@@ -132,11 +143,11 @@ public class HoughServer {
 						for (int j1=j-theta_radius;j1<j+theta_radius+1;j1++)
 							if (i1>=0 && i1<ws && j1>=0 && j1 <hs && !(i1==i && j1==j)){
 								//differences.append( rho_theta_space[i][j]-rho_theta_space[i1][j1]);
-								BigInteger c= rho_theta_space[i1][j1].modPow(minusOne, nsquare);
-								points_differences[count][counta]=rho_theta_space[i][j].multiply(c).mod(nsquare);
-								//System.out.println(rho_theta_space[i][j]);
-								//System.out.println(c);
-								//System.out.println();
+								if (!rho_theta_space[i1][j1].equals(rho_theta_space[i][j])){
+									BigInteger c= rho_theta_space[i1][j1].modPow(minusOne, nsquare);
+									points_differences[count][counta]=rho_theta_space[i][j].multiply(c).mod(nsquare);
+									//System.out.println(points_differences[count][counta]);
+								}
 								counta++;
 							}
 							
