@@ -92,50 +92,34 @@ public class HomomorphicServer {
 		Point[] points = enc_hashmap.points;
 		BigInteger[][] gradiants = enc_hashmap.gradiants;
 		BigInteger maxInt = new BigInteger(Integer.MAX_VALUE+""); 
-		int count=0;
 		HashSet<Point> local_maxima_array= new HashSet<Point>();
 		int nb_of_lines=0;	
+		int nb_of_lines_passing_threshold=0;
+		int count=0;
 		for (Point p:points){
 			int votesd = paillier.Decryption(p.value).intValue();
-			
 			if (votesd > thresh){
-				//System.out.println (p.value);
-				//System.out.println (votesd);
+				nb_of_lines_passing_threshold++;
 				boolean is_local_maxima=true;
-				//System.out.println ( gradiants[count].length);
-
-				//for (BigInteger d: gradiants[count])
-					//if (d != null)
-						//System.out.println ( d.intValue());
 				for (BigInteger d: gradiants[count]){
 					if (d != null){
-						//System.out.println ( d);
 						BigInteger dd= paillier.Decryption(d);
-						//System.out.println ( dd);
-						//System.out.println ( );
-						/*if ((p.i+p.j)%2==0){
-						System.out.println(d.toString());
-						System.out.println(d.intValue());
-						System.out.println(d.max(maxInt).intValue());
-						System.out.println(maxInt.intValue());
-					}*/
 						if (!(maxInt.intValue()==dd.max(maxInt).intValue())){// it means the d is negative 
 							is_local_maxima=false;
 							break;
 						}
 					}
+				}
 					
-					if (is_local_maxima){
-						p.votes=votesd;
-						local_maxima_array.add(p);
-						nb_of_lines++; 
-						//System.out.println(p.votes);
-					}
-					
-					count++;
+				if (is_local_maxima){
+					p.votes=votesd;
+					local_maxima_array.add(p);
+					nb_of_lines++; 
 				}
 			}
+			count++;
 		}
+		System.out.println("HOMOM number of lines passing the threshold  "+ nb_of_lines_passing_threshold);
 		System.out.println("HOMOM number of lines before tie break  "+ nb_of_lines);
 		long stop_local_maximization = System.currentTimeMillis();
 		System.out.println("HOMOM local maximization time(ms): "

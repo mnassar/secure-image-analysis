@@ -134,18 +134,19 @@ public class Paillier {
         Paillier paillier = new Paillier();
         /* instantiating two plaintext msgs*/
         BigInteger m1 = new BigInteger("20");
-        BigInteger m2 = new BigInteger("-20");
+        BigInteger m2 = new BigInteger("20");
         /* encryption*/
         BigInteger em1 = paillier.Encryption(m1);
         BigInteger em2 = paillier.Encryption(m2);
         /* printout encrypted text*/
-        System.out.println(em1);
-        System.out.println(em2);
-        System.out.println(em1.multiply(em1.modPow(new BigInteger("-1"), paillier.nsquare)).mod(paillier.nsquare));
-        System.out.println(paillier.Decryption(BigInteger.ONE).toString());
+        //System.out.println(em1);
+        //System.out.println(em2);
+        //System.out.println(em1.multiply(em2.modPow(new BigInteger("-1"), paillier.nsquare)).mod(paillier.nsquare));
+        //System.out.println(paillier.Decryption(BigInteger.ONE).toString());
         /* printout decrypted text */
-        System.out.println(paillier.Decryption(em1).toString());
-        System.out.println(paillier.Decryption(em2).toString());
+        //System.out.println(paillier.Decryption(em1).toString());
+        //System.out.println(paillier.Decryption(em2).toString());
+        System.out.println(paillier.Decryption(new BigInteger("28512581754359024254340100999242007308363347024739618871136580172405891528998620042401831995007920232907906644111182393145338963805513033502305059027687428997535122836930054601588230915689846370360202707541235197872842079573923679459491217117212878794161586505714439276929484328807612614483975198309197911773")));
 
         /* test homomorphic properties -> D(E(m1)*E(m2) mod n^2) = (m1 + m2) mod n */
         BigInteger product_em1em2 = em1.multiply(em2).mod(paillier.nsquare);

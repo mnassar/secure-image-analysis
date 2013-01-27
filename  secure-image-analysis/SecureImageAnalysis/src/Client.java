@@ -12,92 +12,54 @@ import javax.imageio.ImageIO;
 
 
 public class Client {
-	//config variables
-	static String enc_zeros_file="shared/enc_zeros.txt";
-	static String img_path="img/SingleLine.png";
-	static String img_out_path="img/SingleLineReconstructed.png";
-	static int rho_radius=1;
-	static int theta_radius=1;
-	static int threshold = 100;
-	static int theta_discretisation_coeff=1000; //bigger means bigger theta step (less thetas)
-	static int rho_discretisation_coeff=1; // bigger means bigger rho step (less rhos)
-	//static int kernel_multiplier=6;
-	static int kernel_multiplier=6;
-	HomomorphicServer homom_server; 
-	HoughServer hough_server;
-	BigInteger nsquare;
+	final String enc_zeros_file="shared/enc_zeros.txt";
 	// to be used for encrypting the 1s in the image
 	// by multiplying it by a fresh encryption of 0
 	final BigInteger cnst_enc_1; 
+	final BigInteger nsquare;
 	//Paillier paillier; 
 	// The client has an image 
 	// he wants to encrypt using homomorphic encryption with 
 	// the help of the homomorphic server 
 	// The homomorphic server pre-generates an array of encrypted 0s 
-	public Client (){
+	HomomorphicServer homom_server; 
+	HoughServer hough_server;
+	int rho_discretisation_coeff;
+	int theta_discretisation_coeff;
+	int threshold;
+	int rho_radius;
+	int theta_radius;
+	int kernel_multiplier; 
+	String results_path;
+	String img_path;
+	String img_out_path;
+	
+	public Client (int rho_discretisation_coeff, int theta_discretisation_coeff, int threshold, 
+			int rho_radius, int theta_radius, int kernel_multiplier, 
+			String results_path, String img_path, String img_out_path){
+		 this.rho_discretisation_coeff =rho_discretisation_coeff  ;
+		 this.theta_discretisation_coeff=theta_discretisation_coeff;
+		 this.threshold=threshold;
+		 this.rho_radius=rho_radius;
+		 this.theta_radius=theta_radius;
+		 this.kernel_multiplier=kernel_multiplier; 
+		 this.results_path=results_path;
+		 this.img_path=img_path;
+		 this.img_out_path=img_out_path;
 		 homom_server= new HomomorphicServer();
-		 hough_server= new HoughServer();
-		 nsquare=homom_server.paillier.nsquare;
+		 hough_server= new HoughServer(rho_radius, theta_radius, kernel_multiplier);
+		 nsquare= homom_server.paillier.nsquare;
 		 cnst_enc_1= homom_server.get_encrypted_one();
 		 Point.rho_radius=rho_radius;
 		 Point.theta_radius=theta_radius;
-		 HoughServer.rho_radius=rho_radius;
-		 HoughServer.theta_radius=theta_radius;
-		 //Blur.kernel_multiplier= kernel_multiplier;
-		 //paillier = new Paillier();
+	
+		 
 	}
-	public static void main(String [] args){
-		Client client = new Client();
+	public void run(){
 		long start = System.currentTimeMillis();
-		BigInteger[][] enc_img=client.encrypt_image(img_path);
+		BigInteger[][] enc_img=encrypt_image(img_path);
 		long end = System.currentTimeMillis();
 		System.out.format("CLIENT time for image encryption %d ms\n", (end-start));
-		/*
-		 BigInteger [][] enc_A=client.hough_server.accumulate(enc_img,rho_step,theta_step, 
-				client.nsquare);
-		
-		//System.out.println("main"+enc_A[0][0]);
-		//decrypt the accumulator 
-		
-		System.out.println("CLIENT receives encrypted accumulator from the hough server");
-		System.out.println("CLIENT //todo: permute enc_A");
-		System.out.println("CLIENT sends encrypted accumulator to the homomoprphic server");
-		int[][] A = client.homom_server.decrypt_A(enc_A);
-		System.out.println("CLIENT receives decrypted accumulator from the homomorphic server");
-		System.out.println("CLIENT //todo: reverse permutation");
-		//for(int i=0;i<A.length;i++){
-		//	for(int j=0;j<A[0].length;j++)
-		//		System.out.print(A[i][j]+" ");
-		//	System.out.println();	
-		//}
-		//thresholding and local maximization 
-		long start_local_maximization = System.currentTimeMillis();
-	    int count_lines=0;
-		double threshold=0.7;
-	    int thresh = (int) (threshold * maxValue(A));
-	    System.out.println("CLIENT local maximization");
-	    HashSet<LocalMaxima> local_maxima_array = new HashSet<LocalMaxima>();
-	    System.out.println("CLIENT rho_local_maximization_radius "+rho_radius);
-	    System.out.println("CLIENT theta_local_maximization_radius "+theta_radius);
-	    System.out.println("CLIENT threshold_votes "+thresh);
-	    System.out.println("CLIENT Detected straight lines:");
-	    System.out.println("CLIENT i,j: \t\t rho \t theta \t\t votes");
-	    for (int i=0;i< A.length;i++)
-	    	for (int j=0; j< A[0].length; j++){
-	    		// thresholding + local maximisation 
-	    		if (A[i][j]>thresh && is_local_maxima_rectangle(A,i,j,rho_radius, theta_radius)){
-	    			if (!local_maxima_array.contains(new LocalMaxima(i,j,A[i][j]))){
-	    				System.out.format("CLIENT %d) %d,%d:\t %d \t %.4f \t %d\n",
-	    					++count_lines,i,j, rho_min+i*rho_step,theta_min+j*theta_step, A[i][j]);
-	    				local_maxima_array.add(new LocalMaxima(i,j,A[i][j]));
-	    			}
-	    		}
-	    	}
-	    long stop_local_maximization = System.currentTimeMillis();
-	    System.out.println("CLIENT local maximization time(ms): "
-	    		+(stop_local_maximization-start_local_maximization));
-		 */
-
 		// prepare some meta data 
 		int w=enc_img.length;
 		int h=enc_img[0].length;
@@ -106,12 +68,12 @@ public class Client {
 		int rho_min=-w;
 		double theta_min=0; 
 		System.out.println("CLIENT sends encrypted image to the hough server");
-		BigInteger enc_0= client.homom_server.get_encrypted_zero();
+		BigInteger enc_0= homom_server.get_encrypted_zero();
 		ShapesDataStructure enc_hashmap= 
-				client.hough_server.accumulate_n_blur(enc_img,rho_step,theta_step,client.nsquare,enc_0);
+				hough_server.accumulate_n_blur(enc_img,rho_step,theta_step,nsquare,enc_0);
 		System.out.println("CLIENT received encrypted hashmap from the hough server");
 		System.out.println("CLIENT sends encrypted hashmap to the homomoprphic server");
-		HashSet<Point> local_maxima_array =client.homom_server.find_local_maximas(enc_hashmap,threshold);
+		HashSet<Point> local_maxima_array =homom_server.find_local_maximas(enc_hashmap,threshold);
 		Iterator<Point> iterator = local_maxima_array.iterator();
 		int count_lines=0;
 		while (iterator.hasNext()){
@@ -119,11 +81,12 @@ public class Client {
 			System.out.format("CLIENT %d) %d,%d:\t %d \t %.4f \t %d\n",
 					++count_lines,p.i,p.j, rho_min+p.i*rho_step,theta_min+p.j*theta_step, p.votes);
 		}
+		System.out.println("CLIENT number of lines final: "+count_lines);
 		// reconstruct image / shapes 
 		draw(local_maxima_array, w, h, rho_min, rho_step, theta_min,theta_step);
 	}
 	
-	static void draw(HashSet<Point> local_maxima_array, int w, int h, 
+	public void draw(HashSet<Point> local_maxima_array, int w, int h, 
 			int rho_min, int rho_step, double theta_min, double theta_step){
 	
 		BufferedImage img_reconstructed = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
@@ -173,6 +136,23 @@ public class Client {
 		}
 		
 	
+	}
+	public static void main (String[] args){
+		//config variables
+		
+		String img_path="img/SingleLine.png";
+		String img_out_path="img/SingleLineReconstructed.png";
+		int rho_radius=1;
+		int theta_radius=1;
+		int threshold = 100;
+		int theta_discretisation_coeff=100; //bigger means bigger theta step (less thetas)
+		int rho_discretisation_coeff=100; // bigger means bigger rho step (less rhos)
+		int kernel_multiplier=6;
+		String results_path = null;
+		new Client(rho_discretisation_coeff, theta_discretisation_coeff, threshold, 
+									rho_radius, theta_radius, kernel_multiplier, 
+									results_path, img_path, img_out_path).run();
+		
 	}
 	
 	BigInteger[][] encrypt_image(String img_in){
@@ -229,7 +209,7 @@ public class Client {
 						return false; 
 		return true; 
 	}
-	static class LocalMaxima{
+	public class LocalMaxima{
     	int i; 
     	int j; 
     	int votes;
