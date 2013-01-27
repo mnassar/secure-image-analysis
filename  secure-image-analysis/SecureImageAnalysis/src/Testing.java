@@ -25,7 +25,7 @@ public class Testing {
 		long start = System.currentTimeMillis();
 		int exp_nb=0;
 		for (int rho_discretisation_coeff=1000; rho_discretisation_coeff<10000 ;rho_discretisation_coeff*=10){
-			for (int theta_discretisation_coeff=100; theta_discretisation_coeff<1000 ;theta_discretisation_coeff*=10){
+			for (int theta_discretisation_coeff=100; theta_discretisation_coeff<10000 ;theta_discretisation_coeff*=10){
 				for (int threshold=100; threshold<200; threshold+=100){
 					for (int rho_radius=1; rho_radius<5; rho_radius+=5){
 						for (int theta_radius=1; theta_radius<5; theta_radius+=5){
@@ -38,28 +38,24 @@ public class Testing {
 									rho_radius, theta_radius, kernel_multiplier, out_file, img_path, img_out_path);
 							// redirect the standard output to out_file
 							try {
-								PrintStream ps= new TeeStream(
-										new PrintStream(new FileOutputStream(out_file)),
+								PrintStream ps = new PrintStream(new FileOutputStream(out_file));
+								PrintStream both_ps= new TeeStream(
+										ps,
 										System.out);
-								System.setOut(ps);
+								System.setOut(both_ps);
 								cl.run();
 								ps.close();
 							} catch (FileNotFoundException e) {
 								e.printStackTrace();
 							}
-							
 							exp_nb++;		
 						}
 					}
 				}
-					
 			}
-		
 		}
 		long end = System.currentTimeMillis();
+		//System.setOut(System.out);
 		System.out.println("total experiments time (min): "+ ((end-start)/60000));
-		
-		
 	}
-
 }
