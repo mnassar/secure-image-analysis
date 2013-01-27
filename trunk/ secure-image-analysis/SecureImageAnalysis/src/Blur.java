@@ -32,10 +32,11 @@ public class Blur {
 
 	public static void main(String [] args){
 		Blur b = new Blur();
+		b.setKernel_multiplier(6);
 		float[] matrix = b.kernel.getKernelData( null );
     	for (int i=0; i<matrix.length; i++){
     		//System.out.print(kernel_multiplier*matrix[i]+" ");
-    		System.out.print(matrix[i]*6+" ");
+    		System.out.print(matrix[i]*b.kernel_multiplier+" ");
     	}
 		//b.filter(src, nsquare)
 		/*Blur b = new Blur();
@@ -73,7 +74,6 @@ public class Blur {
 	 * @param radius blur radius in pixels
 	 */
 	public Blur(int radius) {
-		kernel_multiplier=6;
 		setRadius(radius);
 	}
 
