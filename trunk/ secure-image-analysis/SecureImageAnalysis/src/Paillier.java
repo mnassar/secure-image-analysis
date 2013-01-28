@@ -50,7 +50,10 @@ public class Paillier {
      * number of bits of modulus
      */
     private int bitLength;
-
+    /*
+     * this is part of the decryption/private key
+     */
+    BigInteger u;
     /**
      * Constructs an instance of the Paillier cryptosystem.
      * @param bitLengthVal number of bits of modulus
@@ -92,6 +95,7 @@ public class Paillier {
             System.out.println("g is not good. Choose g again.");
             System.exit(1);
         }
+        u = g.modPow(lambda, nsquare).subtract(BigInteger.ONE).divide(n).modInverse(n);
     }
 
     /**
@@ -121,7 +125,6 @@ public class Paillier {
      * @return plaintext as a BigInteger
      */
     public BigInteger Decryption(BigInteger c) {
-        BigInteger u = g.modPow(lambda, nsquare).subtract(BigInteger.ONE).divide(n).modInverse(n);
         return c.modPow(lambda, nsquare).subtract(BigInteger.ONE).divide(n).multiply(u).mod(n);
     }
 

@@ -115,7 +115,7 @@ public class Client {
 			else {// normal case 
 				for (int x=0;x<w;x++){
 					// calculate y
-					int y=(int) Math.round((rho - x*Math.cos(theta))/Math.sin(theta));
+					int y=(int) Math.ceil((rho - x*Math.cos(theta))/Math.sin(theta));
 					// we can increase the thickness of the line by coloring the 8 pixels around
 					// this helps when comparing the equality of two pictures tolerating some thickness difference
 					//for (int tx=x-2; tx<x+3;tx++)
@@ -201,47 +201,6 @@ public class Client {
 		return enc_img;
 	}
 
-	static boolean is_local_maxima_rectangle(int [][] A, int i, int j, int r_rho, int r_theta){
-		for (int i1=i-r_rho;i1<i+r_rho+1; i1++)
-			for (int j1=j-r_theta;j1<j+r_theta+1;j1++)
-				if (i1>=0 && i1<A.length && j1>=0 && j1 <A[i1].length && !(i1==i && j1==j))
-					if (A[i][j]<A[i1][j1])
-						return false; 
-		return true; 
-	}
-	public class LocalMaxima{
-    	int i; 
-    	int j; 
-    	int votes;
-    	LocalMaxima(int i, int j, int votes){
-    		this.i=i; 
-    		this.j=j; 
-    		this.votes=votes; 
-    	}
-    	public int hashCode(){
-    		return votes;
-    	}
-    	public boolean equals(Object local_maxima){
-    		LocalMaxima lm= (LocalMaxima)local_maxima;
-    		if (Math.abs(this.i - lm.i) < rho_radius && Math.abs(this.j -lm.j) < theta_radius )
-    		// if a local maxima is a neighbour of another local maxima it means that they are equal	
-    			return true; 
-    		else 
-    			return false;
-    	}
-    	public String toString(){
-    		return ("rho index: "+i+", theta index: "+j+", votes: "+votes);
-    	}
-    }
 	
-	private static int maxValue(int[][] a) {
-	    int max = a[0][0];
-	    for (int i = 0; i < a.length; i++)
-	    	for (int j = 0; j < a[0].length; j++){
-	            if (a[i][j] > max) {
-	                    max = a[i][j];
-	            }
-	    }
-	    return max;
-	}
+	
 }

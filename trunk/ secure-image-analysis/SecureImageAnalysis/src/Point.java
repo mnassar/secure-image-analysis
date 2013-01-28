@@ -7,6 +7,11 @@ class Point{
 	int i, j;
 	BigInteger value;
 	int votes;
+	Point(int i, int j, int votes){
+		this.i=i;
+		this.j=j;
+		this.votes=votes;
+	}
 	Point(int i, int j, BigInteger value){
 		this.i=i;
 		this.j=j;
