@@ -1,3 +1,7 @@
+/**
+ * this class is used as reference. It represents the case of non-secure outsourcing
+ * it does not communicate with any other class in this package   
+ */
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
@@ -19,8 +23,8 @@ public class Hough {
 	static int [][] rho_theta_space;
 	static int [] rhos; 
 	static double [] thetas;
-	static int rho_dim=10;
-	static int theta_dim=100;
+	static int rho_dim=1;
+	static int theta_dim=1;
 	static double threshold=0.95;
 	static int w;
 	static int h;
@@ -53,10 +57,10 @@ public class Hough {
 		    int rho_step=1;
 		    int rho_min=-w;
 		    int rho_max=(int) Math.sqrt(w*w+h*h);
-		    double theta_step=Math.atan(Math.min(1./w,1./h));
+		    double theta_step=100*Math.atan(Math.min(1./w,1./h));
 		    double theta_max=Math.PI; // theta_min=0
-		    System.out.println("rho_range= "+rho_min+":"+rho_step+":"+rho_max+"  -->  "+(rho_max-rho_min)/rho_step);
-		    System.out.format("theta_range= "+"0:%.4f:3.14  -->  %d\n",theta_step,(int)(theta_max/theta_step));
+		    System.out.println("rho_range= "+rho_min+":"+rho_step+":"+rho_max+"  -->  "+((rho_max-rho_min)/rho_step+1));
+		    System.out.format("theta_range= "+"0:%.4f:3.14  -->  %d\n",theta_step,(int)(theta_max/theta_step+1));
 		    rhos = new int [((rho_max-rho_min)/rho_step)+1];
 		    thetas = new double [(int) (theta_max/theta_step)+1];
 		    for (int i=0;i< rhos.length;i++){
@@ -64,9 +68,10 @@ public class Hough {
 		    }
 		    for (int i=0;i< thetas.length;i++){
 		    	thetas[i]=i*theta_step;
-		    	
 		    	//System.out.println(thetas[i]+" "+ Math.cos(thetas[i])+" "+Math.sin(thetas[i]));
 		    }
+		    if (thetas[thetas.length-1]>Math.PI)
+		    	thetas[thetas.length-1]=Math.PI;
 		    //thetas[thetas.length-1]=Math.PI;
 		    //System.out.println(Math.PI);
 		    rho_theta_space = new int[rhos.length][thetas.length];
@@ -110,11 +115,17 @@ public class Hough {
 		    //int thresh = (int) (threshold * maxValue(rho_theta_space));
 		    int thresh=100;
 		    System.out.println(" thresh is " + thresh);
+		    int nb_lines_above_th=0;
+		    int nb_lines=0;
+		    //int nb_lines_after_tie_break=0;
 		    for (int i=0;i< rhos.length;i++)
 		    	for (int j=0; j< thetas.length; j++){
 		    		// thresholding + local maximisation 
-		    		if (rho_theta_space[i][j]>thresh && is_local_maxima_rectangle(i,j,rho_dim, theta_dim)){
-		    			if (!local_maxima_array.contains(new LocalMaxima(i,j,rho_theta_space[i][j]))){
+		    		if (rho_theta_space[i][j]>thresh){
+		    			nb_lines_above_th++;
+		    			if(is_local_maxima_rectangle(i,j,rho_dim, theta_dim)){
+		    				nb_lines++;
+		    				//if (!local_maxima_array.contains(new LocalMaxima(i,j,rho_theta_space[i][j]))){
 		    				System.out.format("%d) %d,%d:\t %d \t %.4f \t %d\n",++count_lines,i,j, rhos[i],thetas[j], rho_theta_space[i][j]);
 		    				local_maxima_array.add(new LocalMaxima(i,j,rho_theta_space[i][j]));
 		    			}
@@ -124,6 +135,10 @@ public class Hough {
 		    System.out.println("initialisation time(ms): "+(stop_initialization-start_initialization));
 		    System.out.println("populating time(ms): "+(stop_populating-start_populating));
 		    System.out.println("local maximization time(ms): "+(stop_local_maximization-start_local_maximization));
+		    System.out.println("number of lines above threshold "+ nb_lines_above_th);
+		    System.out.println("number of lines "+ nb_lines);
+		    System.out.println("number of lines after tie break "+local_maxima_array.size());
+		    System.out.println();
 		    //for (LocalMaxima local_maxima: local_maxima_array){
 		    //	System.out.println(local_maxima);
 		    //}
@@ -182,7 +197,7 @@ public class Hough {
     	}
     	public boolean equals(Object local_maxima){
     		LocalMaxima lm= (LocalMaxima)local_maxima;
-    		if (Math.abs(this.i - lm.i) < rho_dim && Math.abs(this.j -lm.j) < theta_dim )
+    		if (Math.abs(this.i - lm.i) < rho_dim+1 && Math.abs(this.j -lm.j) < theta_dim+1 )
     		// if a local maxima is a neighbour of another local maxima it means that they are equal	
     			return true; 
     		else 

@@ -52,7 +52,7 @@ public class HoughServer {
     				double t=theta_min+ theta_index*theta_step;
     				if (t>Math.PI)
     					t=Math.PI;
-    				int rho =  (int) Math.round(y*Math.sin(t)+x*Math.cos(t));
+    				int rho =  (int) Math.ceil(y*Math.sin(t)+x*Math.cos(t));
     				int rho_index=(rho-rho_min)/rho_step;
     				rho_theta_space[rho_index][theta_index]=
     						rho_theta_space[rho_index][theta_index].multiply(p).mod(nsquare);
@@ -107,10 +107,10 @@ public class HoughServer {
 		
 		for (int i=0; i<ws; i++)
 			for (int j=0; j<hs; j++){
-				Point p = new Point(i,j,rho_theta_space[i][j]);
-				points[count]=p;
+				Point point = new Point(i,j,rho_theta_space[i][j]);
+				points[count]=point;
 				//size = (2*rho_radius+1)*(2*theta_radius+1)-1);
-				if((i+j)%2==0){
+				if((i+j)%2==0 ){
 					int counta=0;
 					for (int i1=i-rho_radius;i1<i+rho_radius+1; i1++)
 						for (int j1=j-theta_radius;j1<j+theta_radius+1;j1++)
