@@ -2,6 +2,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.HashSet;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
@@ -111,6 +112,9 @@ public class Client {
 	    
 		BigInteger maxInt = new BigInteger(String.valueOf(Integer.MAX_VALUE));
 		//System.out.println(maxInt);
+		int nb_lines_above_th=0;
+		int nb_lines=0;
+		HashSet<Point> hashset= new HashSet<Point>();
 		for (int i=0; i<rhos; i++){
 			for (int j=0; j<thetas; j++){
 
@@ -132,6 +136,7 @@ public class Client {
 				}
 				int votes  = ai+bi;
 				if (votes >100 ){
+					nb_lines_above_th++;
 					// is local maximum ? 
 					int c=0;
 					boolean local=true;
@@ -159,14 +164,16 @@ public class Client {
 					}
 					if (local){
 						System.out.format("%d %d %d\n",i,j,votes);
+						nb_lines++;
+						hashset.add(new Point(i,j,votes));
 						//System.out.println("inital votes (before blinding) "+	(serverA.rho_theta_space[i][j]+serverB.rho_theta_space[i][j]));
 					}
 				}
-			
 				//System.out.format("                     votes:%d \n",votes);
 			}
 		}
-
+		System.out.println("number of lines above threshold "+nb_lines_above_th);
+		System.out.println("number of lines "+nb_lines);
+		System.out.println("number of lines after tie break " + hashset.size());
 	}
-
 }
