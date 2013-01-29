@@ -1,6 +1,11 @@
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Random;
@@ -33,16 +38,16 @@ public class Client {
 	    System.out.println("time for image splitting (ms) "+(stop_split-start_split));
 	    ServerA serverA = new ServerA();
 	    ServerB serverB = new ServerB();
-	    int rho_step=100; // if bigger means less rhos
-	    int theta_step=100; // if bigger means less thetas
+	    int rho_step=1000; // if bigger means less rhos
+	    int theta_step=1000; // if bigger means less thetas
 	    
 	    long start_populating = System.currentTimeMillis();
-	    serverA.hough(img1,rho_step,theta_step);
+	    serverA.rho_theta_space = serverA.hough(img1,rho_step,theta_step);
 		long stop_populating = System.currentTimeMillis();
 	    System.out.println("SERVERA hough populating time(ms) "+(stop_populating-start_populating));
 	    
 	    start_populating = System.currentTimeMillis();
-	    serverB.hough(img2,rho_step,theta_step);
+	    serverB.rho_theta_space = serverB.hough(img2,rho_step,theta_step);
 	    stop_populating = System.currentTimeMillis();
 	    System.out.println("SERVERB hough populating time(ms) "+(stop_populating-start_populating));
 	    
@@ -76,7 +81,87 @@ public class Client {
 	    stop_decryption= System.currentTimeMillis();
 	    System.out.println("SERVERB decrypt wb(ms) "+(stop_decryption-start_decryption));
 	    
-	    test(serverA, serverB, e_va.length, e_va[0].length);
+	    //test(serverA, serverB, e_va.length, e_va[0].length);
+	    // garbled circuits
+	    // The circuit is already prepared in MyCircuit/locmax.cir
+	    serverA.store_wa();
+	    serverB.store_wb();
+	    final Runtime runtime = Runtime.getRuntime();
+	    final String classpath="-classpath .;bin;..\\GCParserModified\\dist\\GCParser.jar;" +
+	    		"\"C:\\Program Files\\Java\\jdk1.7.0_04\\jre\\lib\\rt.jar\";" +
+	    		"\"C:\\Users\\NASSAR\\workspace\\GCParser\\extlibs\\jargs.jar\";"+
+	    		"\"C:\\Users\\NASSAR\\workspace\\GCParser\\extlibs\\commons-io-1.4.jar\";";
+	    long start_garbling= System.currentTimeMillis();
+	    Thread gcserver =  new Thread() {
+	    	public void run() {
+
+	    		try {
+	    			// serverA starts the GC server 
+	    			Process gcServer = runtime.exec("java " +
+	    					classpath+
+	    					" ServerA input/wa.ser");
+	    			BufferedReader reader = new BufferedReader(new InputStreamReader(gcServer.getErrorStream()));
+	    			String line = "";
+
+	    			while((line = reader.readLine()) != null) {
+	    				// Traitement du flux de sortie de l'application si besoin est
+	    				System.out.println(line);
+	    			} 
+	    		}catch (IOException e) {
+	    			e.printStackTrace();
+	    		} 
+	    	}
+	    };
+	    gcserver.start();
+	    Thread gcclient =new Thread() {
+	    	public void run() {
+	    		try {
+	    			// serverB starts the GC client 
+	    			Process gcClient = runtime.exec(" java " +
+	    					classpath +
+	    					" ServerB input/wb.ser");
+	    			BufferedReader reader = new BufferedReader(new InputStreamReader(gcClient.getErrorStream()));
+	    			String line = "";
+
+	    			while((line = reader.readLine()) != null) {
+	    				// Traitement du flux de sortie de l'application si besoin est
+	    				System.out.println(line);
+	    			} 
+	    		}catch (IOException e) {
+	    			e.printStackTrace();
+	    		} 
+	    	}
+	    };
+	    gcclient.start();
+	    
+	   
+	    try {
+	    	gcserver.join();
+			gcclient.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	    long stop_garbling= System.currentTimeMillis();
+	    System.out.println("SERVERA/SERBERB Garbled Circuits time (ms) "+(stop_garbling-start_garbling));
+	    System.out.println("Results are in file results/"+e_wb.length+"_"+e_wb[0].length+".txt");
+	    int count =0; 
+	    try {
+			BufferedReader br=  new BufferedReader(new FileReader("results/"+e_wb.length+"_"+e_wb[0].length+".txt"));
+			String line;
+			while ((line = br.readLine())!=null){
+				System.out.println(line);
+				count++;
+			}
+	    } catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e){
+			e.printStackTrace();
+		}
+	    System.out.println("number of detected lines: "+count);
+		// ToDo; later 
+	    // as output of garbled circuit, add the number of votes for local maximas  
+	    // so we can do tie break based on number of votes
+	    
 	   	}
 	
 	static void split_image(BufferedImage img, Random rand){
@@ -95,7 +180,7 @@ public class Client {
 	    			p=1;
 	    		else
 	    			p=0;
-	    		int r= rand.nextInt(10000);
+	    		int r= rand.nextInt(10);
 	    		img1[x][y]=r; 
 	    		img2[x][y]=p-r; 
 	    		/*
