@@ -1,7 +1,8 @@
 
 public class Server {
-	int [][] rho_theta_space;
-	void hough(int[][] img, int rho_step, int theta_step){
+	
+	int [][] hough(int[][] img, int rho_step, int theta_step){
+		int [][] rho_theta_space;
 		int w= img.length; 
 		int h= img[0].length; 
 	    int rho_max=(int) Math.sqrt(w*w+h*h);
@@ -24,5 +25,6 @@ public class Server {
 				}
 			}
 		}
+		return rho_theta_space;
 	}
 }
