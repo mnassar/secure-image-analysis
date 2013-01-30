@@ -114,6 +114,7 @@ public class ServerA extends Server {
 	public static void main(String [] args) {
 		BigInteger [][][] wa=null; 
 		
+		 
 		try
 	      {
 	         FileInputStream fileIn =
@@ -121,7 +122,7 @@ public class ServerA extends Server {
 	         ObjectInputStream in = new ObjectInputStream(fileIn);
 	         wa = (BigInteger[][][]) in.readObject();
 	         paillier_n=(BigInteger)in.readObject();
-	         System.out.println(paillier_n);
+	         //System.out.println(paillier_n);
 	         in.close();
 	         fileIn.close();
 	      }catch(IOException e1)
@@ -138,11 +139,12 @@ public class ServerA extends Server {
 	    GCParserCommon com = new GCParserCommon(cirFile,null);
 	    GCParserServer server = new GCParserServer(com);
 	    String detected_lines = "";
+	    long start_garbling= System.currentTimeMillis();
 	    for(int i = 0; i < wa.length; i++){
 	    	for (int j=0; j< wa[0].length;j++){
 	    		int[] wai = grab_int(wa[i][j]);
-	    		/*System.out.println(i+" "+j);
-	    		for (int x: wai)
+	    		System.err.println("server"+i+" "+j);
+	    		/*for (int x: wai)
 	    			System.out.print(x+" ");
 	    		System.out.println();*/
 	    		try {
@@ -166,6 +168,7 @@ public class ServerA extends Server {
 	    		} 
 	    	}
 	    }
+	    long stop_garbling= System.currentTimeMillis();
 	    // write the results to the file 
 		try {
 			File results =  new File("results/"+wa.length+"_"+wa[0].length+".txt");
@@ -176,6 +179,9 @@ public class ServerA extends Server {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	   
+		System.out.println("SERVERA/SERBERB Garbled Circuits time (ms) "+(stop_garbling-start_garbling));
+		System.out.println("Results are in file results/"+1759+"_"+26+".txt");
 		
 	}
 

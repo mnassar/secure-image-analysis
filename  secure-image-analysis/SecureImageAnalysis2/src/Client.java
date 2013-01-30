@@ -21,7 +21,7 @@ public class Client {
 	static int[][] img1;
 	static int[][] img2;
 	public static void main(String[] args) {
-		String img_in="img/SingleLine.png";
+		/*String img_in="img/SingleLine.png";
 		
 		Random rand = new Random();
 		
@@ -38,8 +38,8 @@ public class Client {
 	    System.out.println("time for image splitting (ms) "+(stop_split-start_split));
 	    ServerA serverA = new ServerA();
 	    ServerB serverB = new ServerB();
-	    int rho_step=1000; // if bigger means less rhos
-	    int theta_step=1000; // if bigger means less thetas
+	    int rho_step=1; // if bigger means less rhos
+	    int theta_step=100; // if bigger means less thetas
 	    
 	    long start_populating = System.currentTimeMillis();
 	    serverA.rho_theta_space = serverA.hough(img1,rho_step,theta_step);
@@ -85,7 +85,7 @@ public class Client {
 	    // garbled circuits
 	    // The circuit is already prepared in MyCircuit/locmax.cir
 	    serverA.store_wa();
-	    serverB.store_wb();
+	    serverB.store_wb();*/
 	    final Runtime runtime = Runtime.getRuntime();
 	    final String classpath="-classpath .;bin;..\\GCParserModified\\dist\\GCParser.jar;" +
 	    		"\"C:\\Program Files\\Java\\jdk1.7.0_04\\jre\\lib\\rt.jar\";" +
@@ -97,7 +97,7 @@ public class Client {
 
 	    		try {
 	    			// serverA starts the GC server 
-	    			Process gcServer = runtime.exec("java " +
+	    			Process gcServer = runtime.exec("java -Xmx2048M " +
 	    					classpath+
 	    					" ServerA input/wa.ser");
 	    			BufferedReader reader = new BufferedReader(new InputStreamReader(gcServer.getErrorStream()));
@@ -117,7 +117,7 @@ public class Client {
 	    	public void run() {
 	    		try {
 	    			// serverB starts the GC client 
-	    			Process gcClient = runtime.exec(" java " +
+	    			Process gcClient = runtime.exec(" java -Xmx2048M " +
 	    					classpath +
 	    					" ServerB input/wb.ser");
 	    			BufferedReader reader = new BufferedReader(new InputStreamReader(gcClient.getErrorStream()));
@@ -143,10 +143,10 @@ public class Client {
 		}
 	    long stop_garbling= System.currentTimeMillis();
 	    System.out.println("SERVERA/SERBERB Garbled Circuits time (ms) "+(stop_garbling-start_garbling));
-	    System.out.println("Results are in file results/"+e_wb.length+"_"+e_wb[0].length+".txt");
+	    System.out.println("Results are in file results/"+1759+"_"+26+".txt");
 	    int count =0; 
 	    try {
-			BufferedReader br=  new BufferedReader(new FileReader("results/"+e_wb.length+"_"+e_wb[0].length+".txt"));
+			BufferedReader br=  new BufferedReader(new FileReader("results/"+1759+"_"+26+".txt"));
 			String line;
 			while ((line = br.readLine())!=null){
 				System.out.println(line);

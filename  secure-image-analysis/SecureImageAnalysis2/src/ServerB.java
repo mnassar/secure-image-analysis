@@ -132,7 +132,7 @@ public class ServerB extends Server {
 	         ObjectInputStream in = new ObjectInputStream(fileIn);
 	         wb = (BigInteger[][][]) in.readObject();
 	         paillier_n=(BigInteger)in.readObject();
-	         System.out.println(paillier_n);
+	         //System.out.println(paillier_n);
 	         in.close();
 	         fileIn.close();
 	      }catch(IOException i){
@@ -149,10 +149,11 @@ public class ServerB extends Server {
 	    for(int i = 0; i < wb.length; i++){
 	    	for (int j=0; j< wb[0].length;j++){
 	    		int[] wbi = grab_int(wb[i][j]);
-	    		System.out.println(i+" "+j);
+	    		System.err.println("client"+i+" "+j);
+	    		/*System.out.println(i+" "+j);
 	    		for (int x: wbi)
 	    			System.out.print(x+" ");
-	    		System.out.println();
+	    		System.out.println();*/
 	    		try {
 	    			File temp = new File("input/inputB.txt");
 	    			BufferedWriter bw = new BufferedWriter(new FileWriter(temp));
