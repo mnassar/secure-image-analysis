@@ -35,7 +35,7 @@ max7 max max6 c7
 max8 max max7 c8
 max9 max max8 c9
 flag1 equ max9 c5
-flag2 gtu 6975:32 100:32
+flag2 gtu c5 100:32
 flag and flag1 flag2 
 
 
