@@ -46,8 +46,9 @@ public class ServerB extends Server {
 		BigInteger [][][] e_va = new BigInteger [rhos][thetas][9]; // this will be transferred back to A 
 		for (int i=0; i<rhos; i++){
 			for (int j=0; j<thetas; j++){
-				// choose r 
-				int r = rand.nextInt(10);
+				// choose r from a big enough range (e.g 10 * maxRand client * ImagSize  )
+				// Image size =376740, maxRand used at client is 10 => 10**7 
+				int r = rand.nextInt((int)Math.pow(10, 7));
 				BigInteger big_r = new BigInteger(String.valueOf(r));
 				// calculate the encryption of r with key of A 
 				BigInteger e_r =paillierA.Encryption(big_r);
@@ -57,11 +58,14 @@ public class ServerB extends Server {
 						if (i+x<0 || i+x>rhos-1 || j+y<0 || j+y> thetas-1){
 							e_va[i][j][c]=paillierA.Encryption(big_r); // this gives different values for the borders 
 							vb[i][j][c]=-r;
+							//System.out.println("border"+vb[i][j][c]);
 						}
 						else{ 	
 							e_va[i][j][c]=e_rho_theta_space_a[i+x][j+y].multiply(e_r).mod(paillierA.nsquare);
 							vb[i][j][c]=this.rho_theta_space[i+x][j+y]-r;
+							//System.out.println(this.rho_theta_space[i+x][j+y]+" ,"+vb[i][j][c]);
 						}
+						
 						c++;
 					}
 				}

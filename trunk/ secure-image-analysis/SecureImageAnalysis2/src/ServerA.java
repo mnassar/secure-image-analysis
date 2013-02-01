@@ -77,8 +77,8 @@ public class ServerA extends Server {
 		BigInteger [][][] e_wb = new BigInteger [rhos][thetas][9]; // this will be transferred back to B 
 		for (int i=0; i<rhos; i++){
 			for (int j=0; j<thetas; j++){
-				// choose r
-				int r = rand.nextInt(10);
+				// choose r from a big enough range (here the same range as chosen in serverB)
+				int r = rand.nextInt((int)Math.pow(10,7));
 				BigInteger big_r = new BigInteger (String.valueOf(r));
 				BigInteger minus_r = new BigInteger(String.valueOf(-r));
 				// calculate the encryption of r with key of A 
@@ -180,8 +180,8 @@ public class ServerA extends Server {
 			e.printStackTrace();
 		}
 	   
-		System.out.println("SERVERA/SERBERB Garbled Circuits time (ms) "+(stop_garbling-start_garbling));
-		System.out.println("Results are in file results/"+1759+"_"+26+".txt");
+		System.out.println("SERVERA Garbled Circuits time (ms) "+(stop_garbling-start_garbling));
+		System.out.println("Results are in file results/"+wa.length+"_"+wa[0].length+".txt");
 		
 	}
 
