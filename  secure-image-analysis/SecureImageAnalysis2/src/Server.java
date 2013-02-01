@@ -10,12 +10,16 @@ public class Server {
 	    double theta_min=Math.atan(Math.min(1./w,1./h));
 	    int nb_rhos=((rho_max-rho_min)/rho_step) +1;
 	    int nb_thetas=(int) (Math.PI/(theta_min*theta_step))+1;
-	    System.out.println("number of different rhos "+nb_rhos);
-	    System.out.println("numbner of different thetas "+nb_thetas);
 		rho_theta_space=new int[nb_rhos][nb_thetas]; 
+		/*for (int i=0; i<nb_rhos; i++){
+			for (int j=0; j<nb_thetas; j++){
+				System.out.println(rho_theta_space[i][j]);
+			}
+		}*/
 		for (int x=0; x<w; x++){
 			for (int y=0; y<h; y++){
 				int p = img[x][y];
+				//System.out.println(p);
 				for (int t=0; t<nb_thetas; t++){
 					double theta = t*theta_min*theta_step;
 					if (theta >Math.PI)
@@ -25,6 +29,11 @@ public class Server {
 				}
 			}
 		}
+		/*for (int i=0; i<nb_rhos; i++){
+			for (int j=0; j<nb_thetas; j++){
+				System.out.println(rho_theta_space[i][j]);
+			}
+		}*/
 		return rho_theta_space;
 	}
 }

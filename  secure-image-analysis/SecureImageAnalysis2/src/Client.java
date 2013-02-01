@@ -19,12 +19,16 @@ public class Client {
 	 * @param args
 	 */
 	static int[][] img1;
-	static int[][] img2;
+	static int [][] img2;
+	static int rho_step=100; // if bigger means less rhos; 
+	static int theta_step=1000;  // if bigger means less thetas;
+	static int nb_rhos;
+	static int nb_thetas;
+	
 	public static void main(String[] args) {
-		/*String img_in="img/SingleLine.png";
-		
+		Client cl=new Client();
+		String img_in="img/SingleLine.png";
 		Random rand = new Random();
-		
 	    BufferedImage img=null;
 		try {
 			img = ImageIO.read(new File(img_in));
@@ -33,13 +37,12 @@ public class Client {
 		}
 	    System.out.println("Image to be analysed "+img_in);
 	    long start_split = System.currentTimeMillis();
-	    split_image(img, rand);
+	    cl.split_image(img, rand);
 	    long stop_split = System.currentTimeMillis();
 	    System.out.println("time for image splitting (ms) "+(stop_split-start_split));
 	    ServerA serverA = new ServerA();
 	    ServerB serverB = new ServerB();
-	    int rho_step=1; // if bigger means less rhos
-	    int theta_step=100; // if bigger means less thetas
+	  
 	    
 	    long start_populating = System.currentTimeMillis();
 	    serverA.rho_theta_space = serverA.hough(img1,rho_step,theta_step);
@@ -85,88 +88,22 @@ public class Client {
 	    // garbled circuits
 	    // The circuit is already prepared in MyCircuit/locmax.cir
 	    serverA.store_wa();
-	    serverB.store_wb();*/
-	    final Runtime runtime = Runtime.getRuntime();
-	    final String classpath="-classpath .;bin;..\\GCParserModified\\dist\\GCParser.jar;" +
-	    		"\"C:\\Program Files\\Java\\jdk1.7.0_04\\jre\\lib\\rt.jar\";" +
-	    		"\"C:\\Users\\NASSAR\\workspace\\GCParser\\extlibs\\jargs.jar\";"+
-	    		"\"C:\\Users\\NASSAR\\workspace\\GCParser\\extlibs\\commons-io-1.4.jar\";";
-	    long start_garbling= System.currentTimeMillis();
-	    Thread gcserver =  new Thread() {
-	    	public void run() {
-
-	    		try {
-	    			// serverA starts the GC server 
-	    			Process gcServer = runtime.exec("java -Xmx2048M " +
-	    					classpath+
-	    					" ServerA input/wa.ser");
-	    			BufferedReader reader = new BufferedReader(new InputStreamReader(gcServer.getErrorStream()));
-	    			String line = "";
-
-	    			while((line = reader.readLine()) != null) {
-	    				// Traitement du flux de sortie de l'application si besoin est
-	    				System.out.println(line);
-	    			} 
-	    		}catch (IOException e) {
-	    			e.printStackTrace();
-	    		} 
-	    	}
-	    };
-	    gcserver.start();
-	    Thread gcclient =new Thread() {
-	    	public void run() {
-	    		try {
-	    			// serverB starts the GC client 
-	    			Process gcClient = runtime.exec(" java -Xmx2048M " +
-	    					classpath +
-	    					" ServerB input/wb.ser");
-	    			BufferedReader reader = new BufferedReader(new InputStreamReader(gcClient.getErrorStream()));
-	    			String line = "";
-
-	    			while((line = reader.readLine()) != null) {
-	    				// Traitement du flux de sortie de l'application si besoin est
-	    				System.out.println(line);
-	    			} 
-	    		}catch (IOException e) {
-	    			e.printStackTrace();
-	    		} 
-	    	}
-	    };
-	    gcclient.start();
-	    
-	   
-	    try {
-	    	gcserver.join();
-			gcclient.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	    long stop_garbling= System.currentTimeMillis();
-	    System.out.println("SERVERA/SERBERB Garbled Circuits time (ms) "+(stop_garbling-start_garbling));
-	    System.out.println("Results are in file results/"+1759+"_"+26+".txt");
-	    int count =0; 
-	    try {
-			BufferedReader br=  new BufferedReader(new FileReader("results/"+1759+"_"+26+".txt"));
-			String line;
-			while ((line = br.readLine())!=null){
-				System.out.println(line);
-				count++;
-			}
-	    } catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e){
-			e.printStackTrace();
-		}
-	    System.out.println("number of detected lines: "+count);
-		// ToDo; later 
-	    // as output of garbled circuit, add the number of votes for local maximas  
-	    // so we can do tie break based on number of votes
-	    
-	   	}
+	    serverB.store_wb();
+	    garble();
+	    	    
+	}
 	
-	static void split_image(BufferedImage img, Random rand){
+	public void split_image(BufferedImage img, Random rand){
 		int w = img.getWidth(null);
 	    int h = img.getHeight(null);
+	    int rho_max=(int) Math.sqrt(w*w+h*h);
+	    int rho_min=-w;
+	    double theta_min=Math.atan(Math.min(1./w,1./h));
+	    nb_rhos=((rho_max-rho_min)/rho_step) +1;
+	    nb_thetas=(int) (Math.PI/(theta_min*theta_step))+1;
+	    
+	    System.out.println("number of different rhos "+nb_rhos);
+	    System.out.println("numbner of different thetas "+nb_thetas);
 	    System.out.println("x_min " +img.getMinX()); 
 	    System.out.println("y_min " +img.getMinY()); 
 	    System.out.println("width "+img.getWidth()); 
@@ -180,15 +117,18 @@ public class Client {
 	    			p=1;
 	    		else
 	    			p=0;
+	    		// choose a max value suitable for blinding 
+	    		//(e.g. 10 times the max value of the clear data)
+	    		// here the clear data are 0 or 1 
 	    		int r= rand.nextInt(10);
 	    		img1[x][y]=r; 
 	    		img2[x][y]=p-r; 
-	    		/*
-	    		if (p!=-1){
-	    			System.out.println(p+" "+r+" "+(p-r));
-	    			System.out.println(0xff000000);
-	    		}
-	    		*/
+	    		
+	    		//if (p!=-1){
+	    		//System.out.println(p+" "+r+" "+(p-r));
+	    			//System.out.println(0xff000000);
+	    		//}
+	    		
 	    	}
 	    }
 	}
@@ -260,5 +200,87 @@ public class Client {
 		System.out.println("number of lines above threshold "+nb_lines_above_th);
 		System.out.println("number of lines "+nb_lines);
 		System.out.println("number of lines after tie break " + hashset.size());
+	}
+	
+	static void garble(){
+
+	    final Runtime runtime = Runtime.getRuntime();
+	    final String classpath="-classpath .;bin;..\\GCParserModified\\dist\\GCParser.jar;" +
+	    		"\"C:\\Program Files\\Java\\jdk1.7.0_04\\jre\\lib\\rt.jar\";" +
+	    		"\"C:\\Users\\NASSAR\\workspace\\GCParserModified\\extlibs\\jargs.jar\";"+
+	    		"\"C:\\Users\\NASSAR\\workspace\\GCParserModified\\extlibs\\commons-io-1.4.jar\";";
+	    long start_garbling= System.currentTimeMillis();
+	    Thread gcserver =  new Thread() {
+	    	public void run() {
+
+	    		try {
+	    			// serverA starts the GC server 
+	    			Process gcServer = runtime.exec("java -Xmx2048M " +
+	    					classpath+
+	    					" ServerA input/wa.ser");
+	    			
+	    			BufferedReader reader = new BufferedReader(new InputStreamReader(gcServer.getInputStream()));
+	    			String line = "";
+	    			
+	    			while((line = reader.readLine()) != null) {
+	    				System.out.println(line);
+	    			} 
+	    			reader.close();
+	    		}catch (IOException  e) {
+	    			e.printStackTrace();
+	    		} 
+	    	}
+	    };
+	    gcserver.start();
+	    Thread gcclient =new Thread() {
+	    	public void run() {
+	    		try {
+	    			// serverB starts the GC client 
+	    			Process gcClient = runtime.exec(" java -Xmx2048M " +
+	    					classpath +
+	    					" ServerB input/wb.ser");
+	    			
+	    			BufferedReader reader = new BufferedReader(new InputStreamReader(gcClient.getInputStream()));
+	    			String line = "";
+	    			while((line = reader.readLine()) != null) {
+	    				System.out.println(line);
+	    			} 
+	    			reader.close();
+	    			
+	    		}catch (IOException e) {
+	    			e.printStackTrace();
+	    		} 
+	    	}
+	    };
+	    gcclient.start();
+	    
+	   
+	    try {
+	    	gcclient.join();
+	    	gcserver.join();
+		
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	    long stop_garbling= System.currentTimeMillis();
+	    System.out.println("SERVERA/SERBERB Garbled Circuits time (ms) "+(stop_garbling-start_garbling));
+	    System.out.println("Results are in file results/"+nb_rhos+"_"+nb_thetas+".txt");
+	    int count =0; 
+	    try {
+	    	BufferedReader br=  new BufferedReader(new FileReader("results/"+nb_rhos+"_"+nb_thetas+".txt"));
+	    	String line;
+	    	while ((line = br.readLine())!=null){
+	    		System.out.println(line);
+	    		count++;
+	    	}
+	    } catch (IOException e) {
+			e.printStackTrace();
+		}
+	    System.out.println("number of detected lines: "+count);
+		
+	    // ToDo; later 
+	    // as output of garbled circuit, add the number of votes for local maximas  
+	    // so we can do tie break based on number of votes
+
 	}
 }
