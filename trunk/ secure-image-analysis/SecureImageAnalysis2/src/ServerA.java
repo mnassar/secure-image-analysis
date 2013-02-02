@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -110,79 +111,100 @@ public class ServerA extends Server {
 	          i.printStackTrace();
 	      }
 	}
-
+	static int rhos; 
+	static int thetas; 
+	static int threshold=100;
 	public static void main(String [] args) {
-		BigInteger [][][] wa=null; 
 		
-		 
-		try
-	      {
-	         FileInputStream fileIn =
-	                          new FileInputStream("input/wa.ser");
-	         ObjectInputStream in = new ObjectInputStream(fileIn);
-	         wa = (BigInteger[][][]) in.readObject();
-	         paillier_n=(BigInteger)in.readObject();
-	         //System.out.println(paillier_n);
-	         in.close();
-	         fileIn.close();
-	      }catch(IOException e1)
-	      {
-	         e1.printStackTrace();
-	      }catch(ClassNotFoundException e2)
-	      {
-	          e2.printStackTrace();
-	       }
-		// prepare the GC 
+		// prepare the gc input 
+		File inputA =  create_gc_input_file();
+		PrivateInputProvider pip=null;
+		try {
+			pip = new PrivateInputsFile(new FileInputStream(inputA));
+		} catch (FileNotFoundException e2) {
+			e2.printStackTrace();
+		}
+		// prepare the fc circuit 
 		Wire.labelBitLength = 80;
-	    PrivateInputProvider pip;
-	    File cirFile = new File( "MyCircuits/locmax.cir" );
-	    GCParserCommon com = new GCParserCommon(cirFile,null);
+	    // create a circuit with a suitable size for inputs 
+	    File cirFile = create_gc_circuit(); 
+	   
+	    
+	    long start_garbling= System.currentTimeMillis();
+	    GCParserCommon com = new GCParserCommon(cirFile,pip);
 	    GCParserServer server = new GCParserServer(com);
 	    String detected_lines = "";
-	    long start_garbling= System.currentTimeMillis();
-	    for(int i = 0; i < wa.length; i++){
-	    	for (int j=0; j< wa[0].length;j++){
-	    		int[] wai = grab_int(wa[i][j]);
-	    		System.err.println("server"+i+" "+j);
-	    		/*for (int x: wai)
-	    			System.out.print(x+" ");
-	    		System.out.println();*/
-	    		try {
-	    			File temp = new File("input/inputA.txt");
-	    			BufferedWriter bw = new BufferedWriter(new FileWriter(temp));
-	    			String input=""; 
-	    			for (int c=0;c<9 ;c++)
-	    				input+=String.format("a%d %d\r\n",(c+1),wai[c]);
-	    			bw.write(input);
-	    			bw.close();
-	    			com.setPIP(new PrivateInputsFile(new FileInputStream(temp)));
-	    			server = new GCParserServer(com);
-	    			server.run();
-	    			HashMap<String, BigInteger> output = (HashMap<String, BigInteger>) server.getOutputValues();
-	    			
-	    			if (output.get("flag").intValue()==1){
-	    				detected_lines +=(i+ " "+j+"\r\n");
-	    			}
-	    		} catch (Exception e) {
-	    			e.printStackTrace();
-	    		} 
-	    	}
-	    }
+	    server.run();
+	    HashMap<String, BigInteger> output;
+		try {
+			output = (HashMap<String, BigInteger>) server.getOutputValues();
+			 for (String flag: output.keySet()){
+			    	if (output.get(flag).intValue()==1){
+			    		detected_lines +=(flag+"\r\n");	
+			    	}
+			    }
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
 	    long stop_garbling= System.currentTimeMillis();
 	    // write the results to the file 
 		try {
-			File results =  new File("results/"+wa.length+"_"+wa[0].length+".txt");
+			File results =  new File("results/"+rhos+"_"+thetas+".txt");
 			BufferedWriter rw = new BufferedWriter(new FileWriter(results));
 			rw.write(detected_lines);
 			rw.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	   
 		System.out.println("SERVERA Garbled Circuits time (ms) "+(stop_garbling-start_garbling));
-		System.out.println("Results are in file results/"+wa.length+"_"+wa[0].length+".txt");
+		System.out.println("Results are in file results/"+rhos+"_"+thetas+".txt");
 		
+	}
+	
+
+
+	private static File create_gc_circuit() {
+		File circuit = new File( "MyCircuits/locmax.cir" );
+		try{
+			BufferedWriter bw = new BufferedWriter(new FileWriter(circuit));
+
+			for (int i=0; i<rhos ;i++){
+				for (int j=0; j<thetas; j++){
+					for (int c=0;c<9;c++){
+						bw.write(String.format(".input b%ds%ds%d 1 64\r\n",i,j,c)); 
+						bw.write(String.format(".input a%ds%ds%d 2 64\r\n",i,j,c));
+					}
+				}
+			}
+			for (int i=0; i<rhos ;i++){
+				for (int j=0; j<thetas; j++){
+					bw.write(String.format(".output flag%ds%d\r\n",i,j)); 
+				}
+			}
+			for (int i=0; i<rhos ;i++){
+				for (int j=0; j<thetas; j++){
+					for (int c=0;c<9;c++){
+						bw.write(String.format("c%ds%ds%d add a%ds%ds%d b%ds%ds%d\r\n",i,j,c,i,j,c,i,j,c));
+					}
+				}
+			}
+			for (int i=0; i<rhos ;i++){
+				for (int j=0; j<thetas; j++){
+					bw.write(String.format("max%ds%ds1 max c%ds%ds0 c%ds%ds1\r\n",i,j,i,j,i,j));
+					for (int c=2;c<9;c++){
+						bw.write(String.format("max%ds%ds%d max max%ds%ds%d c%ds%ds%d\r\n",i,j,c,i,j,(c-1),i,j,c));
+					}
+					bw.write(String.format("flag%ds%ds1 equ max%ds%ds8 c%ds%ds4\r\n",i,j,i,j,i,j));
+					bw.write(String.format("flag%ds%ds2 gtu c%ds%ds4 %d:64\r\n",i,j,i,j,threshold));
+					bw.write(String.format("flag%ds%d and flag%ds%ds1 flag%ds%ds2\r\n",i,j,i,j,i,j));
+				}
+			}
+			bw.close();
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+		return circuit;
 	}
 
 
@@ -202,5 +224,41 @@ public class ServerA extends Server {
 		}
 		
 		return int_wa;
+	}
+
+
+	public static File create_gc_input_file() {
+		BigInteger [][][] wa=null; 
+		File temp=null;
+		try{
+	         FileInputStream fileIn =
+	                          new FileInputStream("input/wa.ser");
+	         ObjectInputStream in = new ObjectInputStream(fileIn);
+	         wa = (BigInteger[][][]) in.readObject();
+	         rhos = wa.length; 
+	         thetas= wa[0].length;
+	         paillier_n=(BigInteger)in.readObject();
+	         in.close();
+	         fileIn.close();
+	      }catch(IOException e1)	      {
+	         e1.printStackTrace();
+	      }catch(ClassNotFoundException e2)	      {
+	          e2.printStackTrace();
+	       }
+		try {
+			temp = new File("input/inputA.txt");
+			BufferedWriter bw = new BufferedWriter(new FileWriter(temp));
+			for(int i = 0; i <rhos; i++){
+				for (int j=0; j<thetas;j++){
+					int[] wai = grab_int(wa[i][j]);
+					for (int c=0;c<9 ;c++)
+						bw.write(String.format("a%ds%ds%d %d\r\n",i,j,c,wai[c]));
+				}
+			}
+			bw.close();
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+		return temp;
 	}
 }

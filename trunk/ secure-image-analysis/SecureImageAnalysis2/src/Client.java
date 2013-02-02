@@ -232,6 +232,7 @@ public class Client {
 	    	}
 	    };
 	    gcserver.start();
+	    // here we can wait a secong before starting the client 
 	    Thread gcclient =new Thread() {
 	    	public void run() {
 	    		try {
