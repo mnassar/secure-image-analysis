@@ -126,62 +126,26 @@ public class ServerB extends Server {
 	          i.printStackTrace();
 	      }
 	}
-
+	static int rhos;
+	static int thetas;
 	public static void main( String []args) {
 		BigInteger [][][] wb=null; 
 		try
-	      {
-	         FileInputStream fileIn =
-	                          new FileInputStream("input/wb.ser");
-	         ObjectInputStream in = new ObjectInputStream(fileIn);
-	         wb = (BigInteger[][][]) in.readObject();
-	         paillier_n=(BigInteger)in.readObject();
-	         //System.out.println(paillier_n);
-	         in.close();
-	         fileIn.close();
-	      }catch(IOException i){
-	    	  i.printStackTrace();
-	      }catch(ClassNotFoundException e2){
-	    	  e2.printStackTrace();
-	      }
-		ProgClient.serverIPname = "localhost";
-	    Program.iterCount = 1;
-		File cirFile = new File( "MyCircuits/locmax.cir" );
-	    PrivateInputProvider pip;
-	    GCParserCommon com = new GCParserCommon(cirFile,null);
-	    GCParserClient client = new GCParserClient(com);
-	    for(int i = 0; i < wb.length; i++){
-	    	for (int j=0; j< wb[0].length;j++){
-	    		int[] wbi = grab_int(wb[i][j]);
-	    		System.err.println("client"+i+" "+j);
-	    		/*System.out.println(i+" "+j);
-	    		for (int x: wbi)
-	    			System.out.print(x+" ");
-	    		System.out.println();*/
-	    		try {
-	    			File temp = new File("input/inputB.txt");
-	    			BufferedWriter bw = new BufferedWriter(new FileWriter(temp));
-	    			String input=""; 
-	    			for (int c=0;c<9 ;c++)
-	    				input+=String.format("b%d %d\r\n",(c+1),wbi[c]);
-	    			bw.write(input);
-	    			bw.close();
-	    			com.setPIP(new PrivateInputsFile(new FileInputStream(temp)));
-	    			client = new GCParserClient(com); 
-	    			// wait a second so the server is ready 
-	    			/*try {
-	    			    Thread.sleep(2000);
-	    			} catch(InterruptedException ex) {
-	    			    Thread.currentThread().interrupt();
-	    			}*/
-	    			client.run();
-	    		} catch (Exception e) {
-	    			e.printStackTrace();
-	    		} 
-	    	}
-	    }
-		
+		{
+			// prepare the gc input 
+			File inputB =  create_gc_input_file();
+			ProgClient.serverIPname = "localhost";
+			Program.iterCount = 1;
+			File cirFile = new File( "MyCircuits/locmax.cir" );
+			GCParserCommon com = new GCParserCommon(cirFile,new PrivateInputsFile(new FileInputStream(inputB)));
+			GCParserClient client = new GCParserClient(com);
+			client = new GCParserClient(com); 
+			client.run();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
 	}
+	
 	private static int[] grab_int(BigInteger[] wb_i_j) {
 		int []int_wb = new int [9];
 		int c=0;
@@ -196,6 +160,42 @@ public class ServerB extends Server {
 			c++;
 		}
 		return int_wb;
+	}
+
+
+	public static File create_gc_input_file() {
+		BigInteger [][][] wb=null; 
+		File temp=null;
+		try{
+	         FileInputStream fileIn =
+	                          new FileInputStream("input/wb.ser");
+	         ObjectInputStream in = new ObjectInputStream(fileIn);
+	         wb = (BigInteger[][][]) in.readObject();
+	         rhos = wb.length; 
+	         thetas= wb[0].length;
+	         paillier_n=(BigInteger)in.readObject();
+	         in.close();
+	         fileIn.close();
+	      }catch(IOException e1)	      {
+	         e1.printStackTrace();
+	      }catch(ClassNotFoundException e2)	      {
+	          e2.printStackTrace();
+	       }
+		try {
+			temp = new File("input/inputB.txt");
+			BufferedWriter bw = new BufferedWriter(new FileWriter(temp));
+			for(int i = 0; i <rhos; i++){
+				for (int j=0; j<thetas;j++){
+					int[] wbi = grab_int(wb[i][j]);
+					for (int c=0;c<9 ;c++)
+						bw.write(String.format("b%ds%ds%d %d\r\n",i,j,c,wbi[c]));
+				}
+			}
+			bw.close();
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+		return temp;
 	}
 
 }
